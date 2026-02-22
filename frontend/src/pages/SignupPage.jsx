@@ -33,9 +33,9 @@ const SignupPage = () => {
         location: formData.location,
         role: isBreeder ? 'breeder' : 'buyer'
       });
-      
-      toast.success('Account created! Please check your email to verify.');
-      navigate('/login');
+
+      toast.success('Welcome to BluBloodz! Your account is ready.');
+      navigate(isBreeder ? '/dashboard/breeder' : '/search');
     } catch (error) {
       toast.error(error.message || 'Failed to create account');
     } finally {
