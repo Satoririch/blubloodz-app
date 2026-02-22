@@ -51,14 +51,23 @@ const LandingPage = () => {
               BluBloodz
             </span>
           </div>
-          <Button
-            onClick={() => navigate('/login')}
-            variant="ghost"
-            className="text-slate-300 hover:text-white"
-            data-testid="login-button-header"
-          >
-            Login
-          </Button>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/search"
+              className="text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
+              data-testid="browse-link-header"
+            >
+              Browse
+            </Link>
+            <Button
+              onClick={() => navigate('/login')}
+              variant="ghost"
+              className="text-slate-300 hover:text-white"
+              data-testid="login-button-header"
+            >
+              Login
+            </Button>
+          </div>
         </div>
       </header>
       
