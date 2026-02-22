@@ -18,10 +18,10 @@
 - Ensured CRACO and webpack dependencies work with Node 20
 
 ### 3. Vercel Deployment Configuration
-**Created**: `vercel.json` with proper build settings
-- Specified Node version: 20.x
-- Configured build output directory
-- Set up routing for SPA
+**Note**: Using Vercel's auto-detection instead of vercel.json
+- Vercel will auto-detect React app from package.json
+- Node version can be set in Vercel dashboard (20.x)
+- Build settings configured in Vercel project settings
 
 ## Changes Made
 
