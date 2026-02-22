@@ -1,0 +1,62 @@
+{
+  "summary": "Frontend-only testing of the public Search/Browse page at /search. 8 out of 9 features pass. One critical bug: clicking a breeder card from the public /search page redirects to /login because /breeder/:breederId is still wrapped in ProtectedRoute in App.js. All other features (page accessibility, 3 tabs, Supabase live data, filters, nav links) are working correctly.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "App.js ProtectedRoute config",
+        "issue": "Clicking any breeder card from the public /search page navigates to /login instead of /breeder/{id}. Root cause: '/breeder/:breederId' route is wrapped in <ProtectedRoute> (App.js lines 66-73). Same issue likely affects '/dog/:dogId' and '/litter/:litterId' routes. The public search page shows clickable cards but they all gate behind auth.",
+        "selector": "[data-testid^='breeder-card-']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "LandingPage hero",
+        "issues": ["TrustScoreGauge on landing page shows 20 instead of coded value 94 - may be animation/gauge rendering bug in TrustScoreGauge component (score prop is set to 94 but gauge renders 20 visually)"]
+      }
+    ]
+  },
+
+  "test_report_links": ["/app/test_reports/iteration_2.json"],
+
+  "action_items": [
+    "CRITICAL: Make /breeder/:breederId route public (remove ProtectedRoute wrapper) in App.js. Same fix likely needed for /dog/:dogId and /litter/:litterId since the public /search page has clickable dog and litter cards too. Fix in App.js lines 66-101: remove ProtectedRoute from breeder, dog, and litter profile routes (or at minimum breeder).",
+    "MINOR: Investigate TrustScoreGauge on landing page showing score=20 instead of 94. Code passes score={94} but the gauge shows 20. May be an animation delay artifact or a bug in gauge rendering logic."
+  ],
+
+  "critical_code_review_comments": [
+    "CRITICAL: App.js lines 66-73, 75-81, 83-90 — /breeder/:breederId, /dog/:dogId, /litter/:litterId all wrapped in ProtectedRoute. These are detail pages linked from the public /search page. An unauthenticated user browsing /search can see cards but cannot view any detail page without logging in — this breaks the UX flow. Fix: remove ProtectedRoute from these 3 routes or make ProtectedRoute optional/soft (redirect to the profile but show a login prompt only for actions like 'Contact Breeder').",
+    "NOTE: /search route correctly NOT wrapped in ProtectedRoute (line 92) - working as intended.",
+    "NOTE: Dog cards on /search show breed/sex/age correctly. Trust badges not shown (test data has no trust_score).",
+    "NOTE: Litters table has 0 records — empty state renders correctly with proper message."
+  ],
+
+  "updated_files": [],
+
+  "success_rate": {
+    "backend": "N/A (frontend-only test)",
+    "frontend": "89% (8/9 features pass; 1 critical navigation bug)"
+  },
+
+  "seed_data_creation": "No new seed data created. DB has: 4 breeders (Tori, Test Breeder, Unnamed Breeder, Sherice Jones), 3 dogs (CoCo, Kobe, Cersei Jones - all Cane Corso by Sherice Jones), 0 litters.",
+
+  "retest_needed": true,
+
+  "should_main_agent_self_test": true,
+
+  "context_for_next_testing_agent": "The public /search page is fully functional. All tabs load, filters work, nav Browse/Login links work. The only outstanding bug is that clicking a breeder/dog/litter card from /search redirects to /login because the detail routes (/breeder/:id, /dog/:id, /litter/:id) are still ProtectedRoutes. After the fix, test: (1) from /search click first breeder card → should land on /breeder/{uuid} page (2) from /search click a dog card → should land on /dog/{uuid} page. Auth flows (login/signup) still have the Supabase issues from iteration_1 (rate limiting + error message bug).",
+
+  "rca_of_issue": {
+    "issue": "Clicking breeder card from public /search redirects to /login",
+    "reproduction": "1. Navigate to /search (no login), 2. Wait for breeders to load, 3. Click any breeder card, 4. URL becomes /login instead of /breeder/{id}",
+    "root_cause": "In App.js, the /breeder/:breederId route is wrapped in <ProtectedRoute> (lines 66-73). ProtectedRoute checks if user is null, and since the user is unauthenticated, it immediately navigates to /login via <Navigate to='/login' replace />. The breeder, dog, and litter detail pages were protected before the public search page was added.",
+    "mitigation": "In App.js, change the 3 detail routes to be public: <Route path='/breeder/:breederId' element={<BreederProfile />} />, <Route path='/dog/:dogId' element={<DogProfile />} />, <Route path='/litter/:litterId' element={<LitterPage />} />. If these pages have any authenticated actions (e.g., 'Contact Breeder'), those individual actions can check auth internally."
+  }
+}
