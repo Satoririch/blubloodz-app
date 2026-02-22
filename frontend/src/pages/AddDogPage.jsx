@@ -43,23 +43,44 @@ const AddDogPage = () => {
 
     const { registered_name, call_name, breed, sex, dob, color, weight, height, registration_number } = formData;
 
-    const { error } = await supabase.from('dogs').insert({
-      owner_id: user.id,
-      registered_name: registered_name,
-      call_name: call_name || null,
-      breed: breed,
-      sex: sex.toLowerCase(),
-      dob: dob || null,
-      color: color || null,
-      weight: weight ? parseFloat(weight) : null,
-      height: height ? parseFloat(height) : null,
-      registration_number: registration_number || null
+    // Get session for auth token
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      setLoading(false);
+      alert('Not authenticated. Please login again.');
+      navigate('/login');
+      return;
+    }
+
+    // Raw fetch to bypass Supabase client
+    const response = await fetch(process.env.REACT_APP_SUPABASE_URL + '/rest/v1/dogs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + session.access_token,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        owner_id: user.id,
+        registered_name: registered_name,
+        call_name: call_name || null,
+        breed: breed,
+        sex: sex.toLowerCase(),
+        dob: dob || null,
+        color: color || null,
+        weight: weight ? parseFloat(weight) : null,
+        height: height ? parseFloat(height) : null,
+        registration_number: registration_number || null
+      })
     });
 
     setLoading(false);
 
-    if (error) {
-      alert('Error: ' + error.message);
+    if (!response.ok) {
+      const errText = await response.text();
+      alert('Error: ' + errText);
       return;
     }
 
