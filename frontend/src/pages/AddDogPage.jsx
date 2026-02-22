@@ -28,80 +28,41 @@ const AddDogPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.sex) {
-      alert('Please select a sex');
+      toast.error('Please select a sex');
       return;
     }
-    
     if (!formData.registered_name || !formData.breed) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
-    
+
     setLoading(true);
-
-    const { registered_name, call_name, breed, sex, dob, color, weight, height, registration_number } = formData;
-
-    // Get session for auth token
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      setLoading(false);
-      alert('Not authenticated. Please login again.');
-      navigate('/login');
-      return;
-    }
 
     const payload = {
       owner_id: user.id,
-      registered_name: registered_name,
-      call_name: call_name || null,
-      breed: breed,
-      sex: sex.toLowerCase(),
-      dob: dob || null,
-      color: color || null,
-      weight: weight ? parseFloat(weight) : null,
-      height: height ? parseFloat(height) : null,
-      registration_number: registration_number || null
+      registered_name: formData.registered_name,
+      call_name: formData.call_name || null,
+      breed: formData.breed,
+      sex: formData.sex.toLowerCase(),
+      dob: formData.dob || null,
+      color: formData.color || null,
+      weight: formData.weight ? parseFloat(formData.weight) : null,
+      height: formData.height ? parseFloat(formData.height) : null,
+      registration_number: formData.registration_number || null,
     };
 
-    console.log('=== DOG INSERT DEBUG ===');
-    console.log('Payload:', JSON.stringify(payload, null, 2));
-    console.log('User ID:', user.id);
-    console.log('Session token:', session.access_token ? 'Present' : 'Missing');
-
-    // Raw fetch to bypass Supabase client
     try {
-      const response = await fetch(process.env.REACT_APP_SUPABASE_URL + '/rest/v1/dogs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + session.access_token,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-
-      setLoading(false);
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.log('Error response:', errText);
-        alert('Error: ' + errText);
-        return;
-      }
-
-      alert('Dog added successfully!');
+      const { error } = await supabase.from('dogs').insert(payload);
+      if (error) throw error;
+      toast.success('Dog added successfully!');
       navigate('/dashboard/breeder');
-    } catch (err) {
+    } catch (error) {
+      console.error('Error adding dog:', error);
+      toast.error(error.message || 'Failed to add dog. Please try again.');
+    } finally {
       setLoading(false);
-      console.error('Fetch error:', err);
-      alert('Network error: ' + err.message);
     }
   };
 
