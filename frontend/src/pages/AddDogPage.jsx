@@ -128,7 +128,7 @@ const AddDogPage = () => {
                     onValueChange={(value) => setFormData({ ...formData, breed: value })}
                     required
                   >
-                    <SelectTrigger className="bg-[#0A1628] border-white/10 text-white">
+                    <SelectTrigger className="bg-[#0A1628] border-white/10 text-white" data-testid="breed-select">
                       <SelectValue placeholder="Select breed" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1E3A5F] border-white/10">
