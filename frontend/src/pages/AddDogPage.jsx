@@ -30,29 +30,32 @@ const AddDogPage = () => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const dogData = {
-        ...formData,
+    const { data, error } = await supabase
+      .from('dogs')
+      .insert({
         owner_id: user.id,
-        weight: formData.weight ? parseFloat(formData.weight) : null,
-        height: formData.height ? parseFloat(formData.height) : null,
-      };
+        registered_name: formData.registered_name,
+        call_name: formData.call_name || null,
+        breed: formData.breed,
+        sex: formData.sex,
+        dob: formData.dob || null,
+        color: formData.color || null,
+        weight: formData.weight ? Number(formData.weight) : null,
+        height: formData.height ? Number(formData.height) : null,
+        registration_number: formData.registration_number || null
+      })
+      .select()
+      .single();
 
-      const { data, error } = await supabase
-        .from('dogs')
-        .insert([dogData])
-        .select()
-        .single();
+    setLoading(false);
 
-      if (error) throw error;
-
-      toast.success('Dog added successfully!');
-      navigate(`/dog/${data.id}`);
-    } catch (error) {
-      toast.error(error.message || 'Failed to add dog');
-    } finally {
-      setLoading(false);
+    if (error) {
+      alert('Error adding dog: ' + error.message);
+      return;
     }
+
+    toast.success('Dog added successfully!');
+    navigate('/dog/' + data.id);
   };
 
   const handleChange = (e) => {
