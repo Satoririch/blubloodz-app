@@ -47,10 +47,25 @@ export const AuthProvider = ({ children }) => {
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setProfile(data);
+
+      if (data) {
+        setProfile(data);
+      } else {
+        // No profile row yet — create one from auth metadata (handles race condition on signup)
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const meta = authUser?.user_metadata || {};
+        if (meta.role) {
+          const { data: newProfile, error: upsertErr } = await supabase
+            .from('users')
+            .upsert({ id: userId, full_name: meta.full_name || null, role: meta.role })
+            .select()
+            .maybeSingle();
+          if (!upsertErr) setProfile(newProfile);
+        }
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -72,16 +87,22 @@ export const AuthProvider = ({ children }) => {
 
     if (error) throw error;
 
-    // Update profile with additional data
+    // Create profile row with all signup data
     if (data.user) {
-      await supabase
+      const { error: profileError } = await supabase
         .from('users')
-        .update({
-          kennel_name: userData.kennel_name,
-          location: userData.location,
-          role: userData.role
-        })
-        .eq('id', data.user.id);
+        .upsert({
+          id: data.user.id,
+          full_name: userData.full_name,
+          kennel_name: userData.kennel_name || null,
+          location: userData.location || null,
+          role: userData.role,
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // Non-fatal — auth account was created, profile will be retried on first login
+      }
     }
 
     return data;
