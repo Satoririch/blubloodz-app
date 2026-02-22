@@ -104,6 +104,7 @@ const AddDogPage = () => {
                     onChange={handleChange}
                     className="bg-[#0A1628] border-white/10 focus:border-[#C5A55A] text-white"
                     required
+                    data-testid="registered-name-input"
                   />
                 </div>
 
