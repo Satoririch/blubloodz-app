@@ -26,7 +26,7 @@ const AddDogPage = () => {
     registration_number: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!formData.sex) {
@@ -36,44 +36,36 @@ const AddDogPage = () => {
     
     setLoading(true);
 
-    const insertData = {
+    const { registered_name, call_name, breed, sex, dob, color, weight, height, registration_number } = formData;
+
+    const dogData = {
       owner_id: user.id,
-      registered_name: formData.registered_name,
-      call_name: formData.call_name || null,
-      breed: formData.breed,
-      sex: formData.sex.toLowerCase(),
-      dob: formData.dob || null,
-      color: formData.color || null,
-      weight: formData.weight ? parseFloat(formData.weight) : null,
-      height: formData.height ? parseFloat(formData.height) : null,
-      registration_number: formData.registration_number || null
+      registered_name: registered_name,
+      call_name: call_name || null,
+      breed: breed,
+      sex: sex.toLowerCase(),
+      dob: dob || null,
+      color: color || null,
+      weight: weight ? parseFloat(weight) : null,
+      height: height ? parseFloat(height) : null,
+      registration_number: registration_number || null
     };
 
-    console.log('INSERT DATA BEING SENT:', JSON.stringify(insertData, null, 2));
-
-    supabase
+    const { data, error } = await supabase
       .from('dogs')
-      .insert(insertData)
+      .insert(dogData)
       .select()
-      .single()
-      .then((result) => {
-        setLoading(false);
-        console.log('SUPABASE RESULT:', result);
-        
-        if (result.error) {
-          console.log('ERROR DETAILS:', result.error);
-          alert('Error: ' + (result.error.message || 'Failed to add dog'));
-          return;
-        }
+      .single();
 
-        toast.success('Dog added successfully!');
-        navigate('/dog/' + result.data.id);
-      })
-      .catch((err) => {
-        setLoading(false);
-        console.log('CAUGHT ERROR:', err);
-        alert('Error: Unable to add dog');
-      });
+    setLoading(false);
+
+    if (error) {
+      alert('Error: ' + error.message);
+      return;
+    }
+
+    toast.success('Dog added successfully!');
+    navigate('/dog/' + data.id);
   };
 
   const handleChange = (e) => {
