@@ -49,6 +49,8 @@ const AddDogPage = () => {
       registration_number: formData.registration_number || null
     };
 
+    console.log('INSERT DATA BEING SENT:', JSON.stringify(insertData, null, 2));
+
     supabase
       .from('dogs')
       .insert(insertData)
@@ -56,8 +58,10 @@ const AddDogPage = () => {
       .single()
       .then((result) => {
         setLoading(false);
+        console.log('SUPABASE RESULT:', result);
         
         if (result.error) {
+          console.log('ERROR DETAILS:', result.error);
           alert('Error: ' + (result.error.message || 'Failed to add dog'));
           return;
         }
@@ -67,6 +71,7 @@ const AddDogPage = () => {
       })
       .catch((err) => {
         setLoading(false);
+        console.log('CAUGHT ERROR:', err);
         alert('Error: Unable to add dog');
       });
   };
