@@ -1,0 +1,153 @@
+{
+  "project_name": "BluBloodz",
+  "design_philosophy": {
+    "identity": "E1: The Anti-AI Designer",
+    "core_principles": [
+      "Trust is the product",
+      "Premium over playful",
+      "Dark mode is default",
+      "Data density with breathing room"
+    ],
+    "emotional_tone": "Elite, Secure, Transparent, Robust"
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Playfair Display, serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "display": "text-6xl md:text-8xl font-bold tracking-tight",
+      "h1": "text-4xl md:text-5xl font-bold leading-tight",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-medium",
+      "body_lg": "text-lg leading-relaxed",
+      "body_base": "text-base leading-relaxed text-slate-300",
+      "caption": "text-sm text-slate-400 uppercase tracking-widest"
+    },
+    "rules": "Headings must always use Playfair Display. Body text must always use Inter. Never mix more than 2 font families."
+  },
+  "colors": {
+    "palette": {
+      "background": {
+        "default": "#0A1628",
+        "card": "#1E3A5F",
+        "overlay": "rgba(10, 22, 40, 0.8)"
+      },
+      "primary": {
+        "main": "#C5A55A",
+        "hover": "#D4B66A",
+        "foreground": "#0A1628"
+      },
+      "secondary": {
+        "main": "#1E3A5F",
+        "foreground": "#FFFFFF"
+      },
+      "accent": {
+        "success": "#2ECC71",
+        "warning": "#F1C40F",
+        "danger": "#E74C3C",
+        "info": "#3498DB"
+      },
+      "text": {
+        "primary": "#FFFFFF",
+        "secondary": "#94A3B8",
+        "muted": "#64748B"
+      },
+      "border": {
+        "default": "rgba(255, 255, 255, 0.1)",
+        "active": "#C5A55A"
+      }
+    },
+    "gradients": {
+      "hero": "linear-gradient(to bottom, rgba(10,22,40,0) 0%, #0A1628 100%)",
+      "gold_glow": "linear-gradient(135deg, #C5A55A 0%, #E5C57A 100%)",
+      "card_surface": "linear-gradient(180deg, rgba(30, 58, 95, 0.5) 0%, rgba(30, 58, 95, 0.2) 100%)"
+    },
+    "trust_score_scale": {
+      "0-59": "#E74C3C",
+      "60-89": "#F1C40F",
+      "90-100": "#2ECC71"
+    }
+  },
+  "spacing_and_layout": {
+    "grid_system": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "landing_bento": "grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-8",
+      "card_grid": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+    },
+    "padding": {
+      "section": "py-20 md:py-32",
+      "container": "px-6 md:px-12",
+      "card": "p-6 md:p-8"
+    },
+    "border_radius": {
+      "card": "rounded-xl",
+      "button": "rounded-md",
+      "input": "rounded-md"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A] font-medium transition-all duration-200 shadow-[0_0_15px_rgba(197,165,90,0.3)]",
+      "secondary": "bg-transparent border border-[#C5A55A] text-[#C5A55A] hover:bg-[#C5A55A] hover:text-[#0A1628] transition-all",
+      "ghost": "text-slate-300 hover:text-white hover:bg-white/5"
+    },
+    "cards": {
+      "base": "bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 hover:border-[#C5A55A]/50 transition-colors duration-300",
+      "feature": "group relative overflow-hidden bg-[#1E3A5F]/20 border border-white/5 hover:bg-[#1E3A5F]/40"
+    },
+    "trust_score_gauge": {
+      "style": "Circular progress with glow effect. Center text is the score. Color changes based on score value.",
+      "animation": "Animate dash-offset from 0 to value on mount."
+    },
+    "inputs": {
+      "style": "bg-[#0A1628] border border-white/10 focus:border-[#C5A55A] focus:ring-1 focus:ring-[#C5A55A] text-white placeholder:text-slate-500"
+    },
+    "badges": {
+      "verified": "bg-[#2ECC71]/20 text-[#2ECC71] border border-[#2ECC71]/30 flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full",
+      "pending": "bg-[#F1C40F]/20 text-[#F1C40F] border border-[#F1C40F]/30"
+    }
+  },
+  "assets": {
+    "icons_library": "lucide-react",
+    "image_mapping": {
+      "hero_background": "https://images.unsplash.com/photo-1688482308921-76d1645cd15a?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "breeder_showcase_1": "https://images.unsplash.com/photo-1718609737695-54c04010442b?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "breeder_showcase_2": "https://images.unsplash.com/photo-1650427222463-1090ab5dc6a9?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "puppy_litter_1": "https://images.unsplash.com/photo-1760204472190-ec9191b6af5c?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "puppy_litter_2": "https://images.unsplash.com/photo-1760210043126-f185b4d16c58?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "frenchie_hero": "https://images.unsplash.com/photo-1723984731151-6f650af3bbe7?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "frenchie_puppy": "https://images.pexels.com/photos/10497109/pexels-photo-10497109.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "breeder_avatar_male": "https://images.unsplash.com/photo-1632772341241-51e975ae8f65?crop=entropy&cs=srgb&fm=jpg&q=85"
+    }
+  },
+  "design_patterns": {
+    "trust_verification": {
+      "visual": "Always use the shield icon or checkmark in Emerald Green (#2ECC71).",
+      "placement": "Next to breeder names, dog names, and health test results."
+    },
+    "glassmorphism": {
+      "usage": "Use for sticky headers, modal overlays, and floating action bars.",
+      "classes": "backdrop-blur-md bg-[#0A1628]/80 border-b border-white/5"
+    }
+  },
+  "universal_guidelines": [
+    "Dark Mode Default: The app is dark mode only. Do not implement light mode toggles unless requested.",
+    "Accessibility: Ensure contrast ratios. Use lighter grays (slate-300) for body text on dark backgrounds.",
+    "Responsive Images: All images must have object-cover and rounded corners.",
+    "Data-TestID: All interactive elements must have a data-testid attribute.",
+    "No Gradients on Text: Keep text solid white or gold for readability.",
+    "Bento Grids: Use asymmetric grids for the landing page features section.",
+    "Shadows: Use colored shadows (glows) sparingly on primary actions."
+  ],
+  "libraries": {
+    "charts": "recharts",
+    "maps": "react-map-gl (or simple static map image for MVP)",
+    "animations": "framer-motion",
+    "icons": "lucide-react",
+    "toast": "sonner",
+    "ui_base": "shadcn/ui"
+  },
+  "instructions_to_main_agent": "Start by setting up the global CSS variables in index.css to match the palette. Then build the Layout component with the sticky glass header. Proceed to build the Landing Page first, then the Dashboard."
+}
