@@ -26,11 +26,13 @@ const LoginPage = () => {
       const role = data?.user?.user_metadata?.role;
       navigate(role === 'buyer' ? '/search' : '/dashboard/breeder');
     } catch (error) {
-      if (error.message?.toLowerCase().includes('email not confirmed')) {
-        toast.error('Please confirm your email before logging in. Check your inbox.');
-      } else {
-        toast.error(error.message || 'Failed to login');
+      let msg = error.message || 'Failed to login';
+      if (msg.includes('body stream') || msg.includes('already read')) {
+        msg = 'Login failed. Please check your credentials and try again.';
+      } else if (msg.toLowerCase().includes('email not confirmed')) {
+        msg = 'Please confirm your email before logging in. Check your inbox.';
       }
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
