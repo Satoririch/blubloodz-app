@@ -30,6 +30,11 @@ const AddDogPage = () => {
     e.preventDefault();
     setLoading(true);
 
+    console.log('Submitting dog data...', {
+      user_id: user?.id,
+      formData
+    });
+
     const { data, error } = await supabase
       .from('dogs')
       .insert({
@@ -47,9 +52,12 @@ const AddDogPage = () => {
       .select()
       .single();
 
+    console.log('Supabase response:', { data, error });
+
     setLoading(false);
 
     if (error) {
+      console.error('Supabase error details:', error);
       alert('Error adding dog: ' + error.message);
       return;
     }
