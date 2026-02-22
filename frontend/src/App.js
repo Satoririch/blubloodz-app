@@ -13,6 +13,7 @@ import DogProfile from "@/pages/DogProfile";
 import LitterPage from "@/pages/LitterPage";
 import SearchPage from "@/pages/SearchPage";
 import TrustScorePage from "@/pages/TrustScorePage";
+import AddDogPage from "@/pages/AddDogPage";
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, profile, loading } = useAuth();
