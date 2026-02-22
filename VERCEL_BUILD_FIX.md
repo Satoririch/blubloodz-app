@@ -41,13 +41,10 @@
    legacy-peer-deps=true
    ```
 
-2. **vercel.json**
-   - Build configuration for Vercel deployment
-   - Node 20.x specification
-   - SPA routing setup
-
-3. **.gitignore**
+2. **.gitignore**
    - Excludes node_modules, build artifacts, env files
+
+**Note**: vercel.json removed to avoid conflicts with Vercel dashboard settings. Use Vercel's project configuration instead.
 
 ## Build Verification
 
