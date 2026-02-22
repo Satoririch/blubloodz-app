@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Shield, Menu, X, User, Search, Home, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
-const Layout = ({ children, userType = null }) => {
+const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, profile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   
@@ -17,14 +20,19 @@ const Layout = ({ children, userType = null }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  const handleLogout = () => {
-    localStorage.removeItem('mockUser');
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success('Logged out successfully');
+      navigate('/');
+    } catch (error) {
+      toast.error('Failed to logout');
+    }
   };
   
   const breederNav = [
     { name: 'Dashboard', path: '/dashboard/breeder', icon: Home },
-    { name: 'My Profile', path: `/breeder/${localStorage.getItem('mockUserId')}`, icon: User }
+    { name: 'My Profile', path: `/breeder/${user?.id}`, icon: User }
   ];
   
   const buyerNav = [
@@ -32,7 +40,7 @@ const Layout = ({ children, userType = null }) => {
     { name: 'Trust Score Info', path: '/trust-score-info', icon: Shield }
   ];
   
-  const navigation = userType === 'breeder' ? breederNav : userType === 'buyer' ? buyerNav : [];
+  const navigation = profile?.role === 'breeder' || profile?.role === 'both' ? breederNav : buyerNav;
   
   return (
     <div className="min-h-screen bg-[#0A1628]">
@@ -51,7 +59,7 @@ const Layout = ({ children, userType = null }) => {
               </span>
             </Link>
             
-            {userType && (
+            {user && (
               <>
                 <nav className="hidden md:flex items-center gap-6">
                   {navigation.map((item) => {
@@ -95,7 +103,7 @@ const Layout = ({ children, userType = null }) => {
             )}
           </div>
           
-          {mobileMenuOpen && userType && (
+          {mobileMenuOpen && user && (
             <nav className="md:hidden mt-4 pt-4 border-t border-white/10 space-y-3">
               {navigation.map((item) => {
                 const Icon = item.icon;
