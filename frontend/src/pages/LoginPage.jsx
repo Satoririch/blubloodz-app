@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, profile } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,13 +19,18 @@ const LoginPage = () => {
     setLoading(true);
     
     try {
-      await signIn(email, password);
+      const data = await signIn(email, password);
       toast.success('Successfully logged in!');
       
-      // Redirect based on user role - will be handled by auth context
-      navigate('/dashboard/breeder');
+      // Redirect based on role from returned session
+      const role = data?.user?.user_metadata?.role;
+      navigate(role === 'buyer' ? '/search' : '/dashboard/breeder');
     } catch (error) {
-      toast.error(error.message || 'Failed to login');
+      if (error.message?.toLowerCase().includes('email not confirmed')) {
+        toast.error('Please confirm your email before logging in. Check your inbox.');
+      } else {
+        toast.error(error.message || 'Failed to login');
+      }
     } finally {
       setLoading(false);
     }
