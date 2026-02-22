@@ -1,0 +1,80 @@
+{
+  "summary": "Frontend-only testing of BluBloodz auth flows (signup, login, protected routes, UI). Two critical blockers found: (1) Supabase signup/login return wrong error message 'body stream already read' due to a bug in @supabase/supabase-js v2.97.0 error handling, (2) All signup attempts blocked by Supabase 429 'over_email_send_rate_limit' — suggesting email confirmation is still ENABLED in the Supabase project despite instructions saying it's disabled. Cannot test authenticated flows (dashboard, add dog, logout) without valid user credentials.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "SignupPage / LoginPage (error handling)",
+        "issue": "Both signup (429) and login (400) show error toast 'Failed to execute json on Response: body stream already read' instead of the actual error message (e.g., 'email rate limit exceeded' or 'Invalid login credentials'). Root cause: @supabase/supabase-js v2.97.0 calls result.json() on a non-OK response inside handleError(), but the body appears already consumed (possible interaction with browser internals or the auth lock mechanism).",
+        "selector": "[data-sonner-toast][data-type='error']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "SignupPage",
+        "issue": "Signup blocked by Supabase 429 'over_email_send_rate_limit' — email confirmation appears to still be ENABLED in the Supabase project (wtldddwmceirjdbhtrve). This triggers an email on every signup attempt, hitting the free-tier limit of 3/hour. Despite instructions saying email confirmation is disabled, the API returns over_email_send_rate_limit which only occurs when email sending is active.",
+        "selector": "[data-testid='signup-submit-button']",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Full signup → dashboard → add dog flow",
+        "issue": "Cannot test end-to-end authenticated flow. Signup is blocked by Supabase rate limiting. Existing users in DB (testdiag@blubl.com, shericejonescc@gmail.com) have unknown passwords. No valid credentials available for testing.",
+        "affected_selectors": ["[data-testid='breeder-dashboard']", "[data-testid='add-dog-button']", "[data-testid='logout-button']"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "All pages",
+        "issues": ["Design looks polished — dark navy (#0A1628) background, gold (#C5A55A) accents, correct branding, good contrast ratios. No obvious design issues."]
+      }
+    ]
+  },
+
+  "test_report_links": ["/app/test_reports/iteration_1.json"],
+
+  "action_items": [
+    "CRITICAL: Verify email confirmation is DISABLED in Supabase Dashboard → Authentication → Email Templates → Confirm signup. Currently the API returns 'over_email_send_rate_limit' which only fires when emails are being sent.",
+    "CRITICAL: Fix wrong error message shown to users on auth failures. Both signup and login show 'Failed to execute json on Response: body stream already read' instead of real error. Options: (a) Downgrade @supabase/supabase-js from ^2.97.0 to a stable version like 2.45.x, or (b) add try/catch wrapper in AuthContext signIn/signUp to catch this specific error and show a friendly message.",
+    "After fixing above: Create test users via Supabase Dashboard (admin) with email=breeder_test_1@blubl.com, password=TestPass123! to validate the full signup→dashboard→add dog flow.",
+    "INFORMATIONAL: Two existing users in DB: testdiag@blubl.com (role:breeder, full_name:'') and shericejonescc@gmail.com (role:breeder, full_name:'Sherice Jones'). The testdiag user has empty full_name — may have been created mid-testing."
+  ],
+
+  "critical_code_review_comments": [
+    "CRITICAL: @supabase/supabase-js v2.97.0 — error handling regression causing 'body stream already read' on all auth failures. Replace with: '^2.45.0' or any stable version before this regression. Or file bug report with Supabase.",
+    "MEDIUM: AuthContext.fetchProfile() upsert on missing profile (line 58-63) only includes {id, full_name, role} — missing kennel_name and location. This is a race condition: if onAuthStateChange fires before signUp()'s upsert completes, a partial profile row is created. Then signUp()'s full upsert would fix it — but there's a small window where profile is incomplete. Low risk but worth noting.",
+    "GOOD: signUp() correctly uses upsert() instead of insert()/update(). Handles race condition.",
+    "GOOD: fetchProfile() correctly uses maybeSingle() instead of single().",
+    "GOOD: SignupPage redirects correctly to /dashboard/breeder (breeder) or /search (buyer).",
+    "GOOD: ProtectedRoute correctly gates /dashboard/breeder, /dog/add, /search behind auth + role checks.",
+    "GOOD: Layout has a logout button (data-testid='logout-button') that calls signOut() and redirects to /.",
+    "NOTE: AddDogPage form inputs (registered_name, breed, sex, color) are missing data-testid attributes — makes future automated testing harder."
+  ],
+
+  "updated_files": [],
+
+  "success_rate": {
+    "backend": "N/A (frontend-only test)",
+    "frontend": "30% (UI structure/navigation pass, but auth flows blocked by Supabase config issues)"
+  },
+
+  "seed_data_creation": "None. Could not create test users due to Supabase rate limiting (429).",
+
+  "retest_needed": true,
+
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "Signup and login are blocked by: (1) Supabase email rate limit (429) — fix by disabling email confirmation in Supabase Dashboard OR manually creating test users; (2) Supabase JS v2.97.0 bug showing 'body stream already read' as error message instead of real error. Once a valid breeder user exists, test: login → breeder dashboard shows name/trust score → click Add Dog → fill form (registered_name, breed=Cane Corso, sex=Male, color=Black) → submit → verify dog appears in dashboard. Layout has logout button at data-testid='logout-button'. Buyer signup form correctly omits kennel_name field. Protected routes correctly redirect to /login when unauthenticated.",
+
+  "rca_of_issue": {
+    "issue": "'Failed to execute json on Response: body stream already read' shown on signup/login failures",
+    "reproduction": "1. Navigate to /signup/breeder or /login, 2. Submit form (any values), 3. Supabase returns 4xx error, 4. Error toast shows wrong message",
+    "root_cause": "In @supabase/supabase-js v2.97.0 auth-js library, the _handleRequest function calls handleError(result) for non-OK responses, which internally calls result.json() to read the error body. However, the body stream has already been consumed before this point (exact mechanism unclear — possibly browser or Supabase internal retrying on specific responses). This throws TypeError 'body stream already read', which is caught and re-thrown as AuthUnknownError with that message as the error.message. The application then shows this technical error to users.",
+    "mitigation": "Option A: Downgrade @supabase/supabase-js to ^2.45.0. Option B: In AuthContext signIn/signUp catch blocks, replace the thrown error with a friendlier message when error.message includes 'body stream already read'. Option C: Wrap Supabase client fetch calls to clone responses before passing to error handlers."
+  }
+}
