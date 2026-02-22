@@ -34,17 +34,16 @@ const Layout = ({ children }) => {
     { name: 'Dashboard', path: '/dashboard/breeder', icon: Home },
     { name: 'My Profile', path: `/breeder/${user?.id}`, icon: User }
   ];
-  
+
   const buyerNav = [
-    { name: 'Search Breeders', path: '/search', icon: Search },
     { name: 'Trust Score Info', path: '/trust-score-info', icon: Shield }
   ];
-  
-  const navigation = profile?.role === 'breeder' || profile?.role === 'both' ? breederNav : buyerNav;
-  
+
+  const roleNav = profile?.role === 'breeder' || profile?.role === 'both' ? breederNav : buyerNav;
+
   return (
     <div className="min-h-screen bg-[#0A1628]">
-      <header 
+      <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled ? 'glass-morphism shadow-lg' : 'bg-transparent'
         }`}
@@ -58,54 +57,83 @@ const Layout = ({ children }) => {
                 BluBloodz
               </span>
             </Link>
-            
-            {user && (
-              <>
-                <nav className="hidden md:flex items-center gap-6">
-                  {navigation.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                          location.pathname === item.path
-                            ? 'text-[#C5A55A]'
-                            : 'text-slate-300 hover:text-white'
-                        }`}
-                        data-testid={`nav-${item.name.toLowerCase().replace(' ', '-')}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                  <Button
-                    onClick={handleLogout}
-                    variant="ghost"
-                    size="sm"
-                    className="text-slate-300 hover:text-white"
-                    data-testid="logout-button"
+
+            {/* Desktop nav */}
+            <nav className="hidden md:flex items-center gap-6">
+              {/* Browse — always visible */}
+              <Link
+                to="/search"
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  location.pathname === '/search' ? 'text-[#C5A55A]' : 'text-slate-300 hover:text-white'
+                }`}
+                data-testid="nav-browse"
+              >
+                <Search className="w-4 h-4" />
+                Browse
+              </Link>
+
+              {user && roleNav.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                      location.pathname === item.path ? 'text-[#C5A55A]' : 'text-slate-300 hover:text-white'
+                    }`}
+                    data-testid={`nav-${item.name.toLowerCase().replace(/ /g, '-')}`}
                   >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </Button>
-                </nav>
-                
-                <button
-                  className="md:hidden text-white"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  data-testid="mobile-menu-toggle"
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+
+              {user ? (
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-300 hover:text-white"
+                  data-testid="logout-button"
                 >
-                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </button>
-              </>
-            )}
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              ) : (
+                <Link to="/login" data-testid="nav-login">
+                  <Button size="sm" className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A] font-medium">
+                    Login
+                  </Button>
+                </Link>
+              )}
+            </nav>
+
+            {/* Mobile menu toggle */}
+            <button
+              className="md:hidden text-white"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              data-testid="mobile-menu-toggle"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
-          
-          {mobileMenuOpen && user && (
+
+          {/* Mobile menu */}
+          {mobileMenuOpen && (
             <nav className="md:hidden mt-4 pt-4 border-t border-white/10 space-y-3">
-              {navigation.map((item) => {
+              <Link
+                to="/search"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-2 text-sm font-medium py-2 ${
+                  location.pathname === '/search' ? 'text-[#C5A55A]' : 'text-slate-300'
+                }`}
+              >
+                <Search className="w-4 h-4" />
+                Browse
+              </Link>
+
+              {user && roleNav.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
@@ -121,16 +149,24 @@ const Layout = ({ children }) => {
                   </Link>
                 );
               })}
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleLogout();
-                }}
-                className="flex items-center gap-2 text-sm font-medium py-2 text-slate-300 w-full"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
+
+              {user ? (
+                <button
+                  onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                  className="flex items-center gap-2 text-sm font-medium py-2 text-slate-300 w-full"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-sm font-medium py-2 text-[#C5A55A]"
+                >
+                  Login
+                </Link>
+              )}
             </nav>
           )}
         </div>

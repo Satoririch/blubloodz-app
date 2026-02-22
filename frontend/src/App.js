@@ -89,14 +89,7 @@ function AppRoutes() {
         } 
       />
       
-      <Route 
-        path="/search" 
-        element={
-          <ProtectedRoute requiredRole="buyer">
-            <SearchPage />
-          </ProtectedRoute>
-        } 
-      />
+      <Route path="/search" element={<SearchPage />} />
       
       <Route 
         path="/trust-score-info" 
