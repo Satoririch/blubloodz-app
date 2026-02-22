@@ -45,11 +45,22 @@ Build a trust-verification and breeding match platform for premium dog breeders 
 - Installed @supabase/supabase-js v2.97.0
 - Created `/app/frontend/src/lib/supabaseClient.js`
 - Created `/app/frontend/src/contexts/AuthContext.jsx` with signUp, signIn, signOut
-- Fixed `signUp()`: Changed `users.update()` → `users.upsert()` with `id` field (root cause of signup bug)
+- Fixed `signUp()`: Changed `users.update()` → `users.upsert()` with `id` field
 - Fixed `fetchProfile()`: Changed `.single()` → `.maybeSingle()` with fallback profile creation from auth metadata
-- Fixed `SignupPage`: Now redirects to role-appropriate dashboard (breeders → /dashboard/breeder, buyers → /search)
-- Fixed `AddDogPage`: Reverted from raw fetch debug code → clean `supabase.from('dogs').insert()` with toast errors
+- Fixed `SignupPage`: Role-based redirects (breeders → /dashboard/breeder, buyers → /search)
+- Fixed `AddDogPage`: Clean `supabase.from('dogs').insert()` with toast errors
 - Fixed error messages: handle "body stream already read" bug in supabase-js v2.97.0
+
+### Session 3 (Public Search/Browse Page) — Feb 22, 2026
+- **SearchPage.jsx**: Full rewrite with 3 tabs (Breeders, Dogs, Litters)
+  - Breeders: query `users` where role=breeder, shows avatar/name/location/trust badge
+  - Dogs: query with `users!owner_id` join, filters: breed dropdown + available_for_breeding toggle
+  - Litters: query with `users!breeder_id` join, filters: breed + status dropdowns
+  - Live Supabase data (4 breeders, 3 dogs confirmed in DB)
+  - EmptyState component for 0 results
+- **App.js**: `/search` made fully public (no ProtectedRoute). Also `/breeder/:id`, `/dog/:id`, `/litter/:id` made public
+- **Layout.jsx**: Browse link always visible in nav; Login button shown for unauthenticated users
+- **LandingPage.jsx**: Browse link added to standalone header
 - All pages already connected to Supabase (BreederDashboard, SearchPage, DogProfile, BreederProfile, LitterPage)
 
 ## Known Issues / Blockers
