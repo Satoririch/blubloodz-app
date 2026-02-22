@@ -28,34 +28,42 @@ const AddDogPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.sex) {
+      alert('Please select a sex');
+      return;
+    }
+    
     setLoading(true);
 
-    const { data, error } = await supabase
+    const insertData = {
+      owner_id: user.id,
+      registered_name: formData.registered_name,
+      call_name: formData.call_name || null,
+      breed: formData.breed,
+      sex: formData.sex.toLowerCase(),
+      dob: formData.dob || null,
+      color: formData.color || null,
+      weight: formData.weight ? parseFloat(formData.weight) : null,
+      height: formData.height ? parseFloat(formData.height) : null,
+      registration_number: formData.registration_number || null
+    };
+
+    const result = await supabase
       .from('dogs')
-      .insert({
-        owner_id: user.id,
-        registered_name: formData.registered_name,
-        call_name: formData.call_name || null,
-        breed: formData.breed,
-        sex: formData.sex.toLowerCase(),
-        dob: formData.dob || null,
-        color: formData.color || null,
-        weight: formData.weight ? parseFloat(formData.weight) : null,
-        height: formData.height ? parseFloat(formData.height) : null,
-        registration_number: formData.registration_number || null
-      })
+      .insert(insertData)
       .select()
       .single();
 
     setLoading(false);
 
-    if (error) {
-      alert('Error adding dog: ' + error.message);
+    if (result.error) {
+      alert('Error: ' + (result.error.message || 'Failed to add dog'));
       return;
     }
 
     toast.success('Dog added successfully!');
-    navigate('/dog/' + data.id);
+    navigate('/dog/' + result.data.id);
   };
 
   const handleChange = (e) => {
