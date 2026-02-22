@@ -54,6 +54,15 @@ function AppRoutes() {
       />
       
       <Route 
+        path="/dog/add" 
+        element={
+          <ProtectedRoute requiredRole="breeder">
+            <AddDogPage />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
         path="/breeder/:breederId" 
         element={
           <ProtectedRoute>
