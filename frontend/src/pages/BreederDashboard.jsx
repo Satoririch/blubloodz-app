@@ -202,7 +202,13 @@ const BreederDashboard = () => {
                     <Package className="w-6 h-6" />
                     Active Litters ({litters.length})
                   </h2>
-                  <Button size="sm" variant="outline" className="border-[#C5A55A] text-[#C5A55A]" data-testid="add-litter-button">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-[#C5A55A] text-[#C5A55A] hover:bg-[#C5A55A] hover:text-[#0A1628] transition-colors"
+                    onClick={() => navigate('/litter/add')}
+                    data-testid="add-litter-button"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Litter
                   </Button>
