@@ -1,0 +1,179 @@
+import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import Layout from '@/components/Layout';
+import HealthTestCard from '@/components/HealthTestCard';
+import { mockDogs, mockBreeders } from '@/mockData';
+import { ArrowLeft, Award, Calendar, Weight, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+const DogProfile = () => {
+  const { dogId } = useParams();
+  const navigate = useNavigate();
+  const userType = localStorage.getItem('mockUser');
+  
+  const dog = mockDogs.find(d => d.id === dogId) || mockDogs[0];
+  const breeder = mockBreeders.find(b => b.id === dog.breederId);
+  
+  return (
+    <Layout userType={userType}>
+      <div className="min-h-screen bg-[#0A1628] py-12 px-6" data-testid="dog-profile-page">
+        <div className="max-w-7xl mx-auto">
+          <Button
+            onClick={() => navigate(-1)}
+            variant="ghost"
+            className="text-slate-300 hover:text-white mb-6"
+            data-testid="back-button"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div>
+              <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden">
+                <img
+                  src={dog.images[0]}
+                  alt={dog.name}
+                  className="w-full h-96 object-cover"
+                  data-testid="dog-main-image"
+                />
+              </div>
+              {dog.images.length > 1 && (
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                  {dog.images.slice(1).map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`${dog.name} ${index + 2}`}
+                      className="w-full h-24 object-cover rounded-lg border border-white/10"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div>
+              <h1 
+                className="text-5xl font-bold text-white mb-3"
+                style={{ fontFamily: 'Playfair Display, serif' }}
+                data-testid="dog-name"
+              >
+                {dog.name}
+              </h1>
+              <p className="text-2xl text-slate-400 mb-6">{dog.breed}</p>
+              
+              <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl p-6 mb-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Details</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-5 h-5 text-[#C5A55A]" />
+                    <div>
+                      <span className="text-slate-400 text-sm">Age</span>
+                      <p className="text-white font-medium">{dog.age}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Weight className="w-5 h-5 text-[#C5A55A]" />
+                    <div>
+                      <span className="text-slate-400 text-sm">Weight</span>
+                      <p className="text-white font-medium">{dog.weight}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-[#C5A55A]" />
+                    <div>
+                      <span className="text-slate-400 text-sm">Registration</span>
+                      <p className="text-white font-medium">{dog.registrationNumber}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Breeder</h3>
+                <div
+                  onClick={() => navigate(`/breeder/${breeder.id}`)}
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                  data-testid="breeder-link"
+                >
+                  <div className="w-12 h-12 rounded-full bg-[#C5A55A] flex items-center justify-center text-[#0A1628] font-bold text-xl">
+                    {breeder.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">{breeder.name}</p>
+                    <p className="text-sm text-slate-400">{breeder.location}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mb-8">
+            <h2 
+              className="text-3xl font-bold text-white mb-6 flex items-center gap-2"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+            >
+              <Award className="w-8 h-8" />
+              Health Test Results
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {dog.healthTests.map((test, index) => (
+                <HealthTestCard key={index} test={test} />
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <h2 
+              className="text-3xl font-bold text-white mb-6"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+            >
+              Pedigree
+            </h2>
+            <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl p-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-1 flex items-center justify-center">
+                  <div className="text-center bg-[#0A1628] rounded-xl p-6 w-full border border-[#C5A55A]/50">
+                    <div className="w-20 h-20 rounded-full bg-[#C5A55A] flex items-center justify-center text-[#0A1628] font-bold text-2xl mx-auto mb-3">
+                      {dog.name.charAt(0)}
+                    </div>
+                    <h3 className="font-bold text-white text-lg mb-1">{dog.name}</h3>
+                    <p className="text-xs text-slate-400">{dog.registrationNumber}</p>
+                  </div>
+                </div>
+                
+                <div className="md:col-span-2 space-y-4">
+                  <div className="bg-[#0A1628] rounded-xl p-6 border border-white/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-3 h-3 rounded-full bg-[#3498DB]"></div>
+                      <span className="text-sm text-slate-400 uppercase tracking-wider">Sire</span>
+                    </div>
+                    <h4 className="font-semibold text-white text-lg mb-1">{dog.pedigree.sire.name}</h4>
+                    <p className="text-xs text-slate-400">{dog.pedigree.sire.registration}</p>
+                  </div>
+                  
+                  <div className="bg-[#0A1628] rounded-xl p-6 border border-white/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-3 h-3 rounded-full bg-[#E91E63]"></div>
+                      <span className="text-sm text-slate-400 uppercase tracking-wider">Dam</span>
+                    </div>
+                    <h4 className="font-semibold text-white text-lg mb-1">{dog.pedigree.dam.name}</h4>
+                    <p className="text-xs text-slate-400">{dog.pedigree.dam.registration}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 text-center">
+                <p className="text-sm text-slate-400">
+                  3-generation pedigree available upon request
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default DogProfile;
