@@ -74,10 +74,14 @@ File sizes after gzip:
 ### For Vercel
 1. Push code to GitHub: `Satoririch/blubloodz-app`
 2. Connect Vercel to the GitHub repository
-3. Vercel will auto-detect the configuration from `vercel.json`
-4. Build command: `cd frontend && yarn build`
-5. Output directory: `frontend/build`
-6. Node version: 20.x (specified in vercel.json)
+3. Configure in Vercel dashboard:
+   - **Framework Preset**: Create React App
+   - **Root Directory**: frontend
+   - **Build Command**: `yarn build`
+   - **Output Directory**: build
+   - **Node Version**: 20.x
+4. Set environment variable: `REACT_APP_BACKEND_URL`
+5. Deploy
 
 ### Environment Variables for Vercel
 Set in Vercel dashboard:
