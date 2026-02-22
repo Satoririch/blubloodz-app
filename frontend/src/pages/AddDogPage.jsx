@@ -30,11 +30,6 @@ const AddDogPage = () => {
     e.preventDefault();
     setLoading(true);
 
-    console.log('Submitting dog data...', {
-      user_id: user?.id,
-      formData
-    });
-
     const { data, error } = await supabase
       .from('dogs')
       .insert({
@@ -42,22 +37,19 @@ const AddDogPage = () => {
         registered_name: formData.registered_name,
         call_name: formData.call_name || null,
         breed: formData.breed,
-        sex: formData.sex,
+        sex: formData.sex.toLowerCase(),
         dob: formData.dob || null,
         color: formData.color || null,
-        weight: formData.weight ? Number(formData.weight) : null,
-        height: formData.height ? Number(formData.height) : null,
+        weight: formData.weight ? parseFloat(formData.weight) : null,
+        height: formData.height ? parseFloat(formData.height) : null,
         registration_number: formData.registration_number || null
       })
       .select()
       .single();
 
-    console.log('Supabase response:', { data, error });
-
     setLoading(false);
 
     if (error) {
-      console.error('Supabase error details:', error);
       alert('Error adding dog: ' + error.message);
       return;
     }
