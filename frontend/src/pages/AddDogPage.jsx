@@ -229,6 +229,7 @@ const AddDogPage = () => {
                   type="submit"
                   disabled={loading}
                   className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A] gold-glow"
+                  data-testid="add-dog-submit-button"
                 >
                   {loading ? 'Adding Dog...' : 'Add Dog'}
                 </Button>
