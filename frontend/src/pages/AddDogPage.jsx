@@ -53,39 +53,56 @@ const AddDogPage = () => {
       return;
     }
 
+    const payload = {
+      owner_id: user.id,
+      registered_name: registered_name,
+      call_name: call_name || null,
+      breed: breed,
+      sex: sex.toLowerCase(),
+      dob: dob || null,
+      color: color || null,
+      weight: weight ? parseFloat(weight) : null,
+      height: height ? parseFloat(height) : null,
+      registration_number: registration_number || null
+    };
+
+    console.log('=== DOG INSERT DEBUG ===');
+    console.log('Payload:', JSON.stringify(payload, null, 2));
+    console.log('User ID:', user.id);
+    console.log('Session token:', session.access_token ? 'Present' : 'Missing');
+
     // Raw fetch to bypass Supabase client
-    const response = await fetch(process.env.REACT_APP_SUPABASE_URL + '/rest/v1/dogs', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + session.access_token,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        owner_id: user.id,
-        registered_name: registered_name,
-        call_name: call_name || null,
-        breed: breed,
-        sex: sex.toLowerCase(),
-        dob: dob || null,
-        color: color || null,
-        weight: weight ? parseFloat(weight) : null,
-        height: height ? parseFloat(height) : null,
-        registration_number: registration_number || null
-      })
-    });
+    try {
+      const response = await fetch(process.env.REACT_APP_SUPABASE_URL + '/rest/v1/dogs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + session.access_token,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
 
-    setLoading(false);
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
 
-    if (!response.ok) {
-      const errText = await response.text();
-      alert('Error: ' + errText);
-      return;
+      setLoading(false);
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.log('Error response:', errText);
+        alert('Error: ' + errText);
+        return;
+      }
+
+      alert('Dog added successfully!');
+      navigate('/dashboard/breeder');
+    } catch (err) {
+      setLoading(false);
+      console.error('Fetch error:', err);
+      alert('Network error: ' + err.message);
     }
-
-    alert('Dog added successfully!');
-    navigate('/dashboard/breeder');
   };
 
   const handleChange = (e) => {
