@@ -37,3 +37,7 @@ coverage/
 
 # Misc
 .vercel
+-e 
+# Environment files
+*.env
+*.env.*
