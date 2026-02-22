@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "buildCommand": "cd frontend && yarn build",
+  "devCommand": "cd frontend && yarn start",
+  "installCommand": "cd frontend && yarn install",
+  "outputDirectory": "frontend/build",
+  "framework": null,
+  "env": {
+    "NODE_VERSION": "20.x"
+  }
+}
