@@ -62,32 +62,9 @@ function AppRoutes() {
         } 
       />
       
-      <Route 
-        path="/breeder/:breederId" 
-        element={
-          <ProtectedRoute>
-            <BreederProfile />
-          </ProtectedRoute>
-        } 
-      />
-      
-      <Route 
-        path="/dog/:dogId" 
-        element={
-          <ProtectedRoute>
-            <DogProfile />
-          </ProtectedRoute>
-        } 
-      />
-      
-      <Route 
-        path="/litter/:litterId" 
-        element={
-          <ProtectedRoute>
-            <LitterPage />
-          </ProtectedRoute>
-        } 
-      />
+      <Route path="/breeder/:breederId" element={<BreederProfile />} />
+      <Route path="/dog/:dogId" element={<DogProfile />} />
+      <Route path="/litter/:litterId" element={<LitterPage />} />
       
       <Route path="/search" element={<SearchPage />} />
       
