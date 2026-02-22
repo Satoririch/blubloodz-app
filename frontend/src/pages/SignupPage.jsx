@@ -27,17 +27,27 @@ const SignupPage = () => {
     setLoading(true);
     
     try {
-      await signUp(formData.email, formData.password, {
+      const data = await signUp(formData.email, formData.password, {
         full_name: formData.full_name,
         kennel_name: isBreeder ? formData.kennel_name : null,
         location: formData.location,
         role: isBreeder ? 'breeder' : 'buyer'
       });
 
-      toast.success('Welcome to BluBloodz! Your account is ready.');
-      navigate(isBreeder ? '/dashboard/breeder' : '/search');
+      if (!data.session) {
+        // Email confirmation is still required in Supabase settings
+        toast.info('Account created! Please check your email and click the confirmation link, then log in.');
+        navigate('/login');
+      } else {
+        toast.success('Welcome to BluBloodz! Your account is ready.');
+        navigate(isBreeder ? '/dashboard/breeder' : '/search');
+      }
     } catch (error) {
-      toast.error(error.message || 'Failed to create account');
+      let msg = error.message || 'Failed to create account';
+      if (msg.includes('body stream') || msg.includes('already read')) {
+        msg = 'Signup failed. This email may already be registered or the server is temporarily busy. Please try again.';
+      }
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
