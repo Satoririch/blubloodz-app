@@ -54,7 +54,7 @@ const AddDogPage = () => {
     const { data, error } = await supabase
       .from('dogs')
       .insert(dogData)
-      .select()
+      .select('*')
       .single();
 
     setLoading(false);
