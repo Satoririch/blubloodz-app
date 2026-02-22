@@ -34,15 +34,20 @@ const AddDogPage = () => {
       return;
     }
     
+    if (!formData.registered_name || !formData.breed) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
     setLoading(true);
 
     const { registered_name, call_name, breed, sex, dob, color, weight, height, registration_number } = formData;
 
     const dogData = {
       owner_id: user.id,
-      registered_name: registered_name,
+      registered_name,
       call_name: call_name || null,
-      breed: breed,
+      breed,
       sex: sex.toLowerCase(),
       dob: dob || null,
       color: color || null,
@@ -51,21 +56,32 @@ const AddDogPage = () => {
       registration_number: registration_number || null
     };
 
-    const { data, error } = await supabase
-      .from('dogs')
-      .insert(dogData)
-      .select('*')
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('dogs')
+        .insert([dogData]);
 
-    setLoading(false);
+      if (error) {
+        setLoading(false);
+        alert('Error: ' + error.message);
+        return;
+      }
 
-    if (error) {
-      alert('Error: ' + error.message);
-      return;
+      // Fetch the inserted dog ID from the response
+      const dogId = data?.[0]?.id;
+      
+      if (dogId) {
+        toast.success('Dog added successfully!');
+        navigate('/dog/' + dogId);
+      } else {
+        // If no ID returned, go to dashboard
+        toast.success('Dog added successfully!');
+        navigate('/dashboard/breeder');
+      }
+    } catch (err) {
+      setLoading(false);
+      alert('Error adding dog. Please try again.');
     }
-
-    toast.success('Dog added successfully!');
-    navigate('/dog/' + data.id);
   };
 
   const handleChange = (e) => {
