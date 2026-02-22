@@ -4,30 +4,30 @@ import { Shield, Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { mockBreeders } from '@/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    setLoading(true);
     
-    if (email === 'breeder@test.com' && password === 'password') {
-      localStorage.setItem('mockUser', 'breeder');
-      localStorage.setItem('mockUserId', 'breeder-1');
-      localStorage.setItem('mockUserName', mockBreeders[0].name);
+    try {
+      await signIn(email, password);
+      toast.success('Successfully logged in!');
+      
+      // Redirect based on user role - will be handled by auth context
       navigate('/dashboard/breeder');
-    } else if (email === 'buyer@test.com' && password === 'password') {
-      localStorage.setItem('mockUser', 'buyer');
-      localStorage.setItem('mockUserId', 'buyer-1');
-      localStorage.setItem('mockUserName', 'John Buyer');
-      navigate('/search');
-    } else {
-      setError('Invalid credentials. Try breeder@test.com / buyer@test.com with password: password');
+    } catch (error) {
+      toast.error(error.message || 'Failed to login');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -83,18 +83,13 @@ const LoginPage = () => {
               </div>
             </div>
             
-            {error && (
-              <div className="bg-[#E74C3C]/20 border border-[#E74C3C]/30 rounded-lg p-3 text-sm text-[#E74C3C]" data-testid="error-message">
-                {error}
-              </div>
-            )}
-            
             <Button
               type="submit"
+              disabled={loading}
               className="w-full bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A] font-medium gold-glow"
               data-testid="login-submit-button"
             >
-              Sign In
+              {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
           
@@ -109,12 +104,6 @@ const LoginPage = () => {
                 Buyer
               </Link>
             </p>
-          </div>
-          
-          <div className="mt-4 p-4 bg-[#0A1628] rounded-lg">
-            <p className="text-xs text-slate-400 mb-2">Demo Credentials:</p>
-            <p className="text-xs text-slate-300">Breeder: breeder@test.com / password</p>
-            <p className="text-xs text-slate-300">Buyer: buyer@test.com / password</p>
           </div>
         </div>
       </div>

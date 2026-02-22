@@ -4,30 +4,42 @@ import { Shield, Mail, Lock, User, MapPin, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const SignupPage = () => {
   const navigate = useNavigate();
   const { userType } = useParams();
+  const { signUp } = useAuth();
   const isBreeder = userType === 'breeder';
   
   const [formData, setFormData] = useState({
-    name: '',
+    full_name: '',
     email: '',
     password: '',
     location: '',
-    breeds: ''
+    kennel_name: '',
   });
+  const [loading, setLoading] = useState(false);
   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    localStorage.setItem('mockUser', userType);
-    localStorage.setItem('mockUserId', `${userType}-${Date.now()}`);
-    localStorage.setItem('mockUserName', formData.name);
+    setLoading(true);
     
-    if (isBreeder) {
-      navigate('/dashboard/breeder');
-    } else {
-      navigate('/search');
+    try {
+      await signUp(formData.email, formData.password, {
+        full_name: formData.full_name,
+        kennel_name: isBreeder ? formData.kennel_name : null,
+        location: formData.location,
+        role: isBreeder ? 'breeder' : 'buyer'
+      });
+      
+      toast.success('Account created! Please check your email to verify.');
+      navigate('/login');
+    } catch (error) {
+      toast.error(error.message || 'Failed to create account');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -59,24 +71,45 @@ const SignupPage = () => {
         <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <Label htmlFor="name" className="text-white mb-2 block">
-                {isBreeder ? 'Kennel/Business Name' : 'Full Name'}
+              <Label htmlFor="full_name" className="text-white mb-2 block">
+                Full Name
               </Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input
-                  id="name"
-                  name="name"
+                  id="full_name"
+                  name="full_name"
                   type="text"
-                  value={formData.name}
+                  value={formData.full_name}
                   onChange={handleChange}
-                  placeholder={isBreeder ? 'Elite Kennels' : 'John Doe'}
+                  placeholder="John Doe"
                   className="pl-10 bg-[#0A1628] border-white/10 focus:border-[#C5A55A] text-white"
                   required
                   data-testid="name-input"
                 />
               </div>
             </div>
+            
+            {isBreeder && (
+              <div>
+                <Label htmlFor="kennel_name" className="text-white mb-2 block">
+                  Kennel/Business Name (Optional)
+                </Label>
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <Input
+                    id="kennel_name"
+                    name="kennel_name"
+                    type="text"
+                    value={formData.kennel_name}
+                    onChange={handleChange}
+                    placeholder="Elite Kennels"
+                    className="pl-10 bg-[#0A1628] border-white/10 focus:border-[#C5A55A] text-white"
+                    data-testid="kennel-input"
+                  />
+                </div>
+              </div>
+            )}
             
             <div>
               <Label htmlFor="email" className="text-white mb-2 block">Email</Label>
@@ -109,6 +142,7 @@ const SignupPage = () => {
                   placeholder="••••••••"
                   className="pl-10 bg-[#0A1628] border-white/10 focus:border-[#C5A55A] text-white"
                   required
+                  minLength={6}
                   data-testid="password-input"
                 />
               </div>
@@ -132,32 +166,13 @@ const SignupPage = () => {
               </div>
             </div>
             
-            {isBreeder && (
-              <div>
-                <Label htmlFor="breeds" className="text-white mb-2 block">Breeds You Work With</Label>
-                <div className="relative">
-                  <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <Input
-                    id="breeds"
-                    name="breeds"
-                    type="text"
-                    value={formData.breeds}
-                    onChange={handleChange}
-                    placeholder="Cane Corso, French Bulldog"
-                    className="pl-10 bg-[#0A1628] border-white/10 focus:border-[#C5A55A] text-white"
-                    required
-                    data-testid="breeds-input"
-                  />
-                </div>
-              </div>
-            )}
-            
             <Button
               type="submit"
+              disabled={loading}
               className="w-full bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A] font-medium gold-glow"
               data-testid="signup-submit-button"
             >
-              Create Account
+              {loading ? 'Creating account...' : 'Create Account'}
             </Button>
           </form>
           
