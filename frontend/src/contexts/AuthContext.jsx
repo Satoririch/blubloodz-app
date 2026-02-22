@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id, session.user.user_metadata);
       } else {
         setLoading(false);
       }
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id, session.user.user_metadata);
       } else {
         setProfile(null);
         setLoading(false);
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId) => {
+  const fetchProfile = async (userId, userMeta = {}) => {
     try {
       const { data, error } = await supabase
         .from('users')
@@ -53,18 +53,14 @@ export const AuthProvider = ({ children }) => {
 
       if (data) {
         setProfile(data);
-      } else {
+      } else if (userMeta?.role) {
         // No profile row yet — create one from auth metadata (handles race condition on signup)
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        const meta = authUser?.user_metadata || {};
-        if (meta.role) {
-          const { data: newProfile, error: upsertErr } = await supabase
-            .from('users')
-            .upsert({ id: userId, full_name: meta.full_name || null, role: meta.role })
-            .select()
-            .maybeSingle();
-          if (!upsertErr) setProfile(newProfile);
-        }
+        const { data: newProfile, error: upsertErr } = await supabase
+          .from('users')
+          .upsert({ id: userId, full_name: userMeta.full_name || null, role: userMeta.role })
+          .select()
+          .maybeSingle();
+        if (!upsertErr) setProfile(newProfile);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
