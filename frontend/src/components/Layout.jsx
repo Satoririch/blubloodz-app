@@ -1,0 +1,154 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Shield, Menu, X, User, Search, Home, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+const Layout = ({ children, userType = null }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  const handleLogout = () => {
+    localStorage.removeItem('mockUser');
+    navigate('/');
+  };
+  
+  const breederNav = [
+    { name: 'Dashboard', path: '/dashboard/breeder', icon: Home },
+    { name: 'My Profile', path: `/breeder/${localStorage.getItem('mockUserId')}`, icon: User }
+  ];
+  
+  const buyerNav = [
+    { name: 'Search Breeders', path: '/search', icon: Search },
+    { name: 'Trust Score Info', path: '/trust-score-info', icon: Shield }
+  ];
+  
+  const navigation = userType === 'breeder' ? breederNav : userType === 'buyer' ? buyerNav : [];
+  
+  return (
+    <div className="min-h-screen bg-[#0A1628]">
+      <header 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled ? 'glass-morphism shadow-lg' : 'bg-transparent'
+        }`}
+        data-testid="main-header"
+      >
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2" data-testid="logo-link">
+              <Shield className="w-8 h-8 text-[#C5A55A]" />
+              <span className="text-2xl font-bold text-white" style={{ fontFamily: 'Playfair Display, serif' }}>
+                BluBloodz
+              </span>
+            </Link>
+            
+            {userType && (
+              <>
+                <nav className="hidden md:flex items-center gap-6">
+                  {navigation.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                          location.pathname === item.path
+                            ? 'text-[#C5A55A]'
+                            : 'text-slate-300 hover:text-white'
+                        }`}
+                        data-testid={`nav-${item.name.toLowerCase().replace(' ', '-')}`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                  <Button
+                    onClick={handleLogout}
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-300 hover:text-white"
+                    data-testid="logout-button"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </nav>
+                
+                <button
+                  className="md:hidden text-white"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  data-testid="mobile-menu-toggle"
+                >
+                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              </>
+            )}
+          </div>
+          
+          {mobileMenuOpen && userType && (
+            <nav className="md:hidden mt-4 pt-4 border-t border-white/10 space-y-3">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-2 text-sm font-medium py-2 ${
+                      location.pathname === item.path ? 'text-[#C5A55A]' : 'text-slate-300'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="flex items-center gap-2 text-sm font-medium py-2 text-slate-300 w-full"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </nav>
+          )}
+        </div>
+      </header>
+      
+      <main className="pt-20">
+        {children}
+      </main>
+      
+      <footer className="bg-[#1E3A5F]/20 border-t border-white/10 mt-20">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Shield className="w-6 h-6 text-[#C5A55A]" />
+              <span className="text-xl font-bold text-white" style={{ fontFamily: 'Playfair Display, serif' }}>
+                BluBloodz
+              </span>
+            </div>
+            <p className="text-sm text-slate-400">
+              © 2024 BluBloodz. Trust Before You Buy. Verify Before You Breed.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Layout;
