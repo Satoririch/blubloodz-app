@@ -148,7 +148,79 @@ const DogProfile = () => {
     }
     setVerifying(false);
   };
-  
+
+  const handleSaveVerification = async () => {
+    if (!verificationResult || !dog) return;
+    setSaving(true);
+    try {
+      const healthTests = [];
+      if (verificationResult.hd_score && verificationResult.hd_score !== 'unknown') {
+        healthTests.push({ dog_id: dog.id, test_type: 'hips', result: verificationResult.hd_score, verification_source: 'canecorsopedigree.com', verification_status: 'verified', notes: 'Source: ' + verificationResult.source_url });
+      }
+      if (verificationResult.ed_score && verificationResult.ed_score !== 'Unknown' && verificationResult.ed_score !== 'unknown') {
+        healthTests.push({ dog_id: dog.id, test_type: 'elbows', result: verificationResult.ed_score, verification_source: 'canecorsopedigree.com', verification_status: 'verified', notes: 'Source: ' + verificationResult.source_url });
+      }
+      if (verificationResult.dsra_result && verificationResult.dsra_result !== 'UNKNOWN' && verificationResult.dsra_result !== 'unknown') {
+        healthTests.push({ dog_id: dog.id, test_type: 'dsra', result: verificationResult.dsra_result, verification_source: 'canecorsopedigree.com', verification_status: 'verified', notes: 'Source: ' + verificationResult.source_url });
+      }
+      if (verificationResult.dvl2_result && verificationResult.dvl2_result !== 'UNKNOWN' && verificationResult.dvl2_result !== 'unknown') {
+        healthTests.push({ dog_id: dog.id, test_type: 'dvl2', result: verificationResult.dvl2_result, verification_source: 'canecorsopedigree.com', verification_status: 'verified', notes: 'Source: ' + verificationResult.source_url });
+      }
+      if (healthTests.length > 0) {
+        const { error: healthError } = await supabase.from('health_records').insert(healthTests);
+        if (healthError) {
+          setVerificationError('Failed to save health records: ' + healthError.message);
+          setSaving(false);
+          return;
+        }
+      }
+      const pedigreeData = {
+        dog_id: dog.id,
+        sire_name: verificationResult.sire?.name || null,
+        dam_name: verificationResult.dam?.name || null,
+        lineage: {
+          sire: verificationResult.sire || null,
+          dam: verificationResult.dam || null,
+          pedigree_number: verificationResult.pedigree_number || null,
+          inbreeding_coefficient: verificationResult.inbreeding_coefficient || null,
+          color: verificationResult.color || null,
+          date_of_birth: verificationResult.date_of_birth || null,
+          titles: verificationResult.titles || null,
+          extra_titles: verificationResult.extra_titles || null
+        },
+        verification_source: 'canecorsopedigree.com',
+        verification_status: 'verified'
+      };
+      const { error: pedigreeError } = await supabase.from('pedigrees').insert(pedigreeData);
+      if (pedigreeError) {
+        setVerificationError('Failed to save pedigree: ' + pedigreeError.message);
+        setSaving(false);
+        return;
+      }
+      const trustScore = calculateTrustScore(verificationResult);
+      const { error: scoreError } = await supabase.from('dogs').update({ trust_score: trustScore }).eq('id', dog.id);
+      if (scoreError) {
+        console.error('Failed to update trust score:', scoreError);
+      }
+      setSaved(true);
+    } catch (err) {
+      setVerificationError('Failed to save: ' + err.message);
+    }
+    setSaving(false);
+  };
+
+  const calculateTrustScore = (data) => {
+    let score = 0;
+    if (data.sire?.name) score += 15;
+    if (data.dam?.name) score += 15;
+    if (data.pedigree_number) score += 10;
+    if (data.hd_score && data.hd_score !== 'unknown') score += 20;
+    if (data.ed_score && data.ed_score !== 'Unknown' && data.ed_score !== 'unknown') score += 15;
+    if (data.dsra_result && data.dsra_result !== 'UNKNOWN') score += 15;
+    if (data.dvl2_result && data.dvl2_result !== 'UNKNOWN') score += 10;
+    return Math.min(score, 100);
+  };
+
   if (loading) {
     return (
       <Layout>
