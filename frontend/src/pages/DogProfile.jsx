@@ -121,6 +121,38 @@ const DogProfile = () => {
     });
   };
   
+  const handleVerifyPedigree = async () => {
+    setVerifying(true);
+    setVerificationError(null);
+    setVerificationResult(null);
+    try {
+      const dogName = dog.registered_name;
+      const response = await fetch(
+        `https://blubloodz-scraper.vercel.app/api/verify-pedigree?name=${encodeURIComponent(dogName)}`
+      );
+      const data = await response.json();
+      if (data.success && data.type === 'profile') {
+        setVerificationResult(data.data);
+      } else if (data.success && data.type === 'search' && data.results && data.results.length > 0) {
+        const firstResult = data.results[0];
+        const profileResponse = await fetch(
+          `https://blubloodz-scraper.vercel.app/api/verify-pedigree?id=${firstResult.id}`
+        );
+        const profileData = await profileResponse.json();
+        if (profileData.success) {
+          setVerificationResult(profileData.data);
+        } else {
+          setVerificationError('Could not load dog profile from pedigree database.');
+        }
+      } else {
+        setVerificationError('Dog not found in pedigree database. Try using the exact registered name.');
+      }
+    } catch (err) {
+      setVerificationError('Verification service unavailable. Please try again later.');
+    }
+    setVerifying(false);
+  };
+  
   if (loading) {
     return (
       <Layout>
