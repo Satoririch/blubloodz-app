@@ -167,7 +167,9 @@ const DogProfile = () => {
         healthTests.push({ dog_id: dog.id, test_type: 'dvl2', result: verificationResult.dvl2_result, verification_source: 'canecorsopedigree.com', verification_status: 'verified', notes: 'Source: ' + verificationResult.source_url });
       }
       if (healthTests.length > 0) {
-        const { error: healthError } = await supabase.from('health_records').insert(healthTests);
+        const { error: healthError } = await supabase.from('health_records').insert(
+          healthTests.map(({ dog_id, test_type, result }) => ({ dog_id, test_type, result }))
+        );
         if (healthError) {
           setVerificationError('Failed to save health records: ' + healthError.message);
           setSaving(false);
