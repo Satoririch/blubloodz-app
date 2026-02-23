@@ -212,7 +212,7 @@ const AddLitterPage = () => {
                           <SelectValue placeholder={maleDogs.length ? 'Select sire' : 'No male dogs yet'} />
                         </SelectTrigger>
                         <SelectContent className="bg-[#1E3A5F] border-white/10">
-                          <SelectItem value="" className="text-slate-400">None</SelectItem>
+                          <SelectItem value="none" className="text-slate-400">None</SelectItem>
                           {maleDogs.map((d) => (
                             <SelectItem key={d.id} value={d.id} className="text-white">
                               {d.registered_name}
