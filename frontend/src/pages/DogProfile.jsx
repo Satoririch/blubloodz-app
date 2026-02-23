@@ -16,6 +16,9 @@ const DogProfile = () => {
   const [healthRecords, setHealthRecords] = useState([]);
   const [pedigree, setPedigree] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+  const [verificationResult, setVerificationResult] = useState(null);
+  const [verificationError, setVerificationError] = useState(null);
   
   useEffect(() => {
     fetchDogData();
