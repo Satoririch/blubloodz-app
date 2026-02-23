@@ -180,18 +180,6 @@ const DogProfile = () => {
         dog_id: dog.id,
         sire_name: verificationResult.sire?.name || null,
         dam_name: verificationResult.dam?.name || null,
-        lineage: {
-          sire: verificationResult.sire || null,
-          dam: verificationResult.dam || null,
-          pedigree_number: verificationResult.pedigree_number || null,
-          inbreeding_coefficient: verificationResult.inbreeding_coefficient || null,
-          color: verificationResult.color || null,
-          date_of_birth: verificationResult.date_of_birth || null,
-          titles: verificationResult.titles || null,
-          extra_titles: verificationResult.extra_titles || null
-        },
-        verification_source: 'canecorsopedigree.com',
-        verification_status: 'verified'
       };
       const { error: pedigreeError } = await supabase.from('pedigrees').insert(pedigreeData);
       if (pedigreeError) {
