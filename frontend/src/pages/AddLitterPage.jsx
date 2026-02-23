@@ -98,8 +98,8 @@ const AddLitterPage = () => {
 
     const payload = {
       breeder_id: user.id,
-      sire_id: formData.sire_id || null,
-      dam_id: formData.dam_id || null,
+      sire_id: formData.sire_id !== 'none' ? formData.sire_id : null,
+      dam_id: formData.dam_id !== 'none' ? formData.dam_id : null,
       breed: formData.breed,
       expected_date: formData.expected_date || null,
       born_date: formData.born_date || null,
