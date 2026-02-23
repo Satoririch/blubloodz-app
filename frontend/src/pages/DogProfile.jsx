@@ -127,26 +127,19 @@ const DogProfile = () => {
     setVerificationError(null);
     setVerificationResult(null);
     try {
-      const dogName = dog.registered_name;
+      if (!pedigreeId.trim()) {
+        setVerificationError('Please enter a pedigree database ID.');
+        setVerifying(false);
+        return;
+      }
       const response = await fetch(
-        `https://blubloodz-scraper.vercel.app/api/verify-pedigree?name=${encodeURIComponent(dogName)}`
+        `https://blubloodz-scraper.vercel.app/api/verify-pedigree?id=${encodeURIComponent(pedigreeId.trim())}`
       );
       const data = await response.json();
-      if (data.success && data.type === 'profile') {
+      if (data.success && data.data) {
         setVerificationResult(data.data);
-      } else if (data.success && data.type === 'search' && data.results && data.results.length > 0) {
-        const firstResult = data.results[0];
-        const profileResponse = await fetch(
-          `https://blubloodz-scraper.vercel.app/api/verify-pedigree?id=${firstResult.id}`
-        );
-        const profileData = await profileResponse.json();
-        if (profileData.success) {
-          setVerificationResult(profileData.data);
-        } else {
-          setVerificationError('Could not load dog profile from pedigree database.');
-        }
       } else {
-        setVerificationError('Dog not found in pedigree database. Try using the exact registered name.');
+        setVerificationError('Dog not found. Check the ID and try again.');
       }
     } catch (err) {
       setVerificationError('Verification service unavailable. Please try again later.');
