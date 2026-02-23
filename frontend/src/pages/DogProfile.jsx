@@ -435,6 +435,27 @@ const DogProfile = () => {
                       <div><span style={{ color: '#999', fontSize: '12px' }}>Inbreeding</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.inbreeding_coefficient ? verificationResult.inbreeding_coefficient.toFixed(2) + '%' : 'Unknown'}</p></div>
                     </div>
                     <p style={{ color: '#4ade80', marginTop: '16px', fontSize: '13px' }}>✅ Verified from canecorsopedigree.com at {new Date(verificationResult.verified_at).toLocaleString()}</p>
+                    {!saved ? (
+                      <button
+                        onClick={handleSaveVerification}
+                        disabled={saving}
+                        style={{
+                          marginTop: '16px',
+                          padding: '10px 24px',
+                          background: saving ? '#555' : 'linear-gradient(135deg, #4ade80, #22c55e)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: saving ? 'not-allowed' : 'pointer',
+                          fontWeight: 'bold',
+                          fontSize: '14px'
+                        }}
+                      >
+                        {saving ? 'Saving...' : '💾 Save to Profile'}
+                      </button>
+                    ) : (
+                      <p style={{ color: '#4ade80', marginTop: '16px', fontWeight: 'bold' }}>✅ Verified data saved to profile!</p>
+                    )}
                   </div>
                 )}
               </div>
