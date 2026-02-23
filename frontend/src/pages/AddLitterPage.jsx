@@ -42,8 +42,8 @@ const AddLitterPage = () => {
 
   const [formData, setFormData] = useState({
     breed: '',
-    sire_id: '',
-    dam_id: '',
+    sire_id: 'none',
+    dam_id: 'none',
     expected_date: '',
     born_date: '',
     puppy_count: '',
