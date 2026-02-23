@@ -305,27 +305,44 @@ const DogProfile = () => {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
                     <h3 style={{ color: '#c9a94e', margin: '0 0 4px 0', fontSize: '18px' }}>Pedigree Verification</h3>
-                    <p style={{ color: '#999', margin: 0, fontSize: '14px' }}>
-                      {verificationResult ? 'Verification complete — data pulled from canecorsopedigree.com' : 'Pull verified health records and pedigree data from canecorsopedigree.com'}
+                    <p style={{ color: '#999', margin: '0 0 12px 0', fontSize: '14px' }}>
+                      {verificationResult ? 'Verification complete — data pulled from canecorsopedigree.com' : 'Enter your dog\'s canecorsopedigree.com ID to pull verified health records and pedigree data.'}
                     </p>
                   </div>
                   {!verificationResult && (
-                    <button
-                      onClick={handleVerifyPedigree}
-                      disabled={verifying}
-                      style={{
-                        padding: '10px 24px',
-                        background: verifying ? '#555' : 'linear-gradient(135deg, #c9a94e, #b8962d)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: verifying ? 'not-allowed' : 'pointer',
-                        fontWeight: 'bold',
-                        fontSize: '14px'
-                      }}
-                    >
-                      {verifying ? 'Verifying...' : '🔍 Verify Pedigree'}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      <input
+                        type="text"
+                        value={pedigreeId}
+                        onChange={(e) => setPedigreeId(e.target.value)}
+                        placeholder="e.g. 115752"
+                        style={{
+                          padding: '10px 14px',
+                          background: '#0d0d1a',
+                          border: '1px solid #2d2d44',
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '14px',
+                          width: '160px'
+                        }}
+                      />
+                      <button
+                        onClick={handleVerifyPedigree}
+                        disabled={verifying}
+                        style={{
+                          padding: '10px 24px',
+                          background: verifying ? '#555' : 'linear-gradient(135deg, #c9a94e, #b8962d)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: verifying ? 'not-allowed' : 'pointer',
+                          fontWeight: 'bold',
+                          fontSize: '14px'
+                        }}
+                      >
+                        {verifying ? 'Verifying...' : '🔍 Verify Pedigree'}
+                      </button>
+                    </div>
                   )}
                 </div>
                 {verificationError && (
