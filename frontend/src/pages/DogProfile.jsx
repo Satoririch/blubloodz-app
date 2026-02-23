@@ -20,6 +20,8 @@ const DogProfile = () => {
   const [verificationResult, setVerificationResult] = useState(null);
   const [verificationError, setVerificationError] = useState(null);
   const [pedigreeId, setPedigreeId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   
   useEffect(() => {
     fetchDogData();
