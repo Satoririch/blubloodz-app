@@ -61,7 +61,15 @@ Build a trust-verification and breeding match platform for premium dog breeders 
 - **App.js**: `/search` made fully public (no ProtectedRoute). Also `/breeder/:id`, `/dog/:id`, `/litter/:id` made public
 - **Layout.jsx**: Browse link always visible in nav; Login button shown for unauthenticated users
 - **LandingPage.jsx**: Browse link added to standalone header
-- All pages already connected to Supabase (BreederDashboard, SearchPage, DogProfile, BreederProfile, LitterPage)
+
+### Session 4 (Add Litter Form) — Feb 22, 2026
+- **AddLitterPage.jsx**: New page at `/litter/add` (protected: breeder-only)
+  - Fetches user's own male dogs for Sire dropdown, female dogs for Dam dropdown
+  - 6 form sections: Basic Info, Parents, Dates, Puppies, Pricing, Description
+  - Inserts to `litters` table: `breeder_id, sire_id, dam_id, breed, expected_date, born_date, puppy_count, available_count, price_min, price_max, description, status`
+  - Redirects to `/dashboard/breeder` on success
+- **App.js**: `/litter/add` route added BEFORE `/litter/:litterId`
+- **BreederDashboard.jsx**: "+ Add Litter" button navigates to `/litter/add`
 
 ## Known Issues / Blockers
 
