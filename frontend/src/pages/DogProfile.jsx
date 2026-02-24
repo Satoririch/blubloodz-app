@@ -154,7 +154,10 @@ const DogProfile = () => {
     setSaving(true);
     setVerificationError(null);
     try {
-      const { error: pedigreeError } = await supabase.from('pedigrees').insert({
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+      const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+      const pedigreeBody = {
         dog_id: dog.id,
         sire_name: verificationResult.sire?.name || null,
         dam_name: verificationResult.dam?.name || null,
@@ -166,15 +169,38 @@ const DogProfile = () => {
         },
         verification_source: 'canecorsopedigree.com',
         verification_status: 'verified'
+      };
+
+      const pedigreeRes = await fetch(supabaseUrl + '/rest/v1/pedigrees', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          'Authorization': 'Bearer ' + (await supabase.auth.getSession()).data.session.access_token,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(pedigreeBody)
       });
-      if (pedigreeError) {
-        setVerificationError('Pedigree save failed: ' + pedigreeError.message);
+
+      if (!pedigreeRes.ok) {
+        const errText = await pedigreeRes.text();
+        setVerificationError('Pedigree save failed: ' + errText);
         setSaving(false);
         return;
       }
 
       const trustScore = calculateTrustScore(verificationResult);
-      await supabase.from('dogs').update({ trust_score: trustScore }).eq('id', dog.id);
+
+      await fetch(supabaseUrl + '/rest/v1/dogs?id=eq.' + dog.id, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          'Authorization': 'Bearer ' + (await supabase.auth.getSession()).data.session.access_token,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ trust_score: trustScore })
+      });
 
       setSaved(true);
     } catch (err) {
