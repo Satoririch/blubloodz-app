@@ -269,11 +269,15 @@ const DogProfile = () => {
               </h1>
               <p className="text-2xl text-slate-400 mb-6">{dog.breed}</p>
               
-              <div className="mb-6">
+              <div className="mb-6" data-testid="trust-score-section">
                 <span className="text-slate-400 text-sm block mb-1">Trust Score</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-4xl font-bold" style={{ color: '#C5A55A' }}>
-                    {dog.trust_score ?? 0}
+                  <span 
+                    className="text-4xl font-bold" 
+                    style={{ color: '#C5A55A' }}
+                    data-testid="trust-score-value"
+                  >
+                    {dog.trust_score !== null && dog.trust_score !== undefined ? dog.trust_score : 0}
                   </span>
                   {badge && (
                     <span
@@ -283,6 +287,7 @@ const DogProfile = () => {
                         borderColor: badge.color,
                         backgroundColor: badge.color + '20'
                       }}
+                      data-testid="trust-score-badge"
                     >
                       {badge.text}
                     </span>
