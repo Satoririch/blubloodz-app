@@ -179,11 +179,27 @@ const DogProfile = () => {
       const pedigreeData = {
         dog_id: dog.id,
         sire_name: verificationResult.sire?.name || null,
+        sire_registration: null,
         dam_name: verificationResult.dam?.name || null,
+        dam_registration: null,
       };
-      const { error: pedigreeError } = await supabase.from('pedigrees').insert(pedigreeData);
-      if (pedigreeError) {
-        setVerificationError('Failed to save pedigree: ' + pedigreeError.message);
+      const { data: { session } } = await supabase.auth.getSession();
+      const pgRes = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/pedigrees`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${session.access_token}`,
+            'Prefer': 'resolution=merge-duplicates,return=minimal',
+          },
+          body: JSON.stringify(pedigreeData),
+        }
+      );
+      if (!pgRes.ok) {
+        const errText = await pgRes.text();
+        setVerificationError(`Failed to save pedigree (${pgRes.status}): ${errText}`);
         setSaving(false);
         return;
       }
