@@ -152,65 +152,33 @@ const DogProfile = () => {
   const handleSaveVerification = async () => {
     if (!verificationResult || !dog) return;
     setSaving(true);
+    setVerificationError(null);
     try {
-      const healthTests = [];
-      if (verificationResult.hd_score && verificationResult.hd_score !== 'unknown') {
-        healthTests.push({ dog_id: dog.id, test_type: 'hips', result: verificationResult.hd_score, verification_source: 'canecorsopedigree.com', verification_status: 'verified', notes: 'Source: ' + verificationResult.source_url });
-      }
-      if (verificationResult.ed_score && verificationResult.ed_score !== 'Unknown' && verificationResult.ed_score !== 'unknown') {
-        healthTests.push({ dog_id: dog.id, test_type: 'elbows', result: verificationResult.ed_score, verification_source: 'canecorsopedigree.com', verification_status: 'verified', notes: 'Source: ' + verificationResult.source_url });
-      }
-      if (verificationResult.dsra_result && verificationResult.dsra_result !== 'UNKNOWN' && verificationResult.dsra_result !== 'unknown') {
-        healthTests.push({ dog_id: dog.id, test_type: 'dsra', result: verificationResult.dsra_result, verification_source: 'canecorsopedigree.com', verification_status: 'verified', notes: 'Source: ' + verificationResult.source_url });
-      }
-      if (verificationResult.dvl2_result && verificationResult.dvl2_result !== 'UNKNOWN' && verificationResult.dvl2_result !== 'unknown') {
-        healthTests.push({ dog_id: dog.id, test_type: 'dvl2', result: verificationResult.dvl2_result, verification_source: 'canecorsopedigree.com', verification_status: 'verified', notes: 'Source: ' + verificationResult.source_url });
-      }
-      if (healthTests.length > 0) {
-        const { error: healthError } = await supabase.from('health_records').insert(
-          healthTests.map(({ dog_id, test_type, result }) => ({ dog_id, test_type, result }))
-        );
-        if (healthError) {
-          setVerificationError('Failed to save health records: ' + healthError.message);
-          setSaving(false);
-          return;
-        }
-      }
-      const pedigreeData = {
+      const { error: pedigreeError } = await supabase.from('pedigrees').insert({
         dog_id: dog.id,
         sire_name: verificationResult.sire?.name || null,
-        sire_registration: null,
         dam_name: verificationResult.dam?.name || null,
-        dam_registration: null,
-      };
-      const { data: { session } } = await supabase.auth.getSession();
-      const pgRes = await fetch(
-        `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/pedigrees`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${session.access_token}`,
-            'Prefer': 'resolution=merge-duplicates,return=minimal',
-          },
-          body: JSON.stringify(pedigreeData),
-        }
-      );
-      if (!pgRes.ok) {
-        const errText = await pgRes.text();
-        setVerificationError(`Failed to save pedigree (${pgRes.status}): ${errText}`);
+        lineage: {
+          sire: verificationResult.sire || null,
+          dam: verificationResult.dam || null,
+          pedigree_number: verificationResult.pedigree_number || null,
+          inbreeding_coefficient: verificationResult.inbreeding_coefficient || null
+        },
+        verification_source: 'canecorsopedigree.com',
+        verification_status: 'verified'
+      });
+      if (pedigreeError) {
+        setVerificationError('Pedigree save failed: ' + pedigreeError.message);
         setSaving(false);
         return;
       }
+
       const trustScore = calculateTrustScore(verificationResult);
-      const { error: scoreError } = await supabase.from('dogs').update({ trust_score: trustScore }).eq('id', dog.id);
-      if (scoreError) {
-        console.error('Failed to update trust score:', scoreError);
-      }
+      await supabase.from('dogs').update({ trust_score: trustScore }).eq('id', dog.id);
+
       setSaved(true);
     } catch (err) {
-      setVerificationError('Failed to save: ' + err.message);
+      setVerificationError('Save failed: ' + (err.message || 'Unknown error'));
     }
     setSaving(false);
   };
