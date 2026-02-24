@@ -61,14 +61,13 @@ const DogProfile = () => {
       if (healthError) throw healthError;
       setHealthRecords(healthData || []);
       
-      // Fetch pedigree
+      // Fetch pedigree rows (one per ancestor)
       const { data: pedigreeData, error: pedigreeError } = await supabase
         .from('pedigrees')
         .select('*')
-        .eq('dog_id', dogId)
-        .single();
+        .eq('dog_id', dogId);
       
-      if (!pedigreeError && pedigreeData) {
+      if (!pedigreeError && pedigreeData && pedigreeData.length > 0) {
         setPedigree(pedigreeData);
       }
       
@@ -475,7 +474,7 @@ const DogProfile = () => {
             </div>
           </div>
           
-          {pedigree && (
+          {pedigree && pedigree.length > 0 && (
             <div>
               <h2 
                 className="text-3xl font-bold text-white mb-6"
@@ -496,31 +495,31 @@ const DogProfile = () => {
                   </div>
                   
                   <div className="md:col-span-2 space-y-4">
-                    {pedigree.sire_name && (
-                      <div className="bg-[#0A1628] rounded-xl p-6 border border-white/10">
+                    {pedigree.filter(p => p.position === 'sire').map((p, i) => (
+                      <div key={i} className="bg-[#0A1628] rounded-xl p-6 border border-white/10">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="w-3 h-3 rounded-full bg-[#3498DB]"></div>
                           <span className="text-sm text-slate-400 uppercase tracking-wider">Sire</span>
                         </div>
-                        <h4 className="font-semibold text-white text-lg mb-1">{pedigree.sire_name}</h4>
-                        {pedigree.sire_registration && (
-                          <p className="text-xs text-slate-400">{pedigree.sire_registration}</p>
+                        <h4 className="font-semibold text-white text-lg mb-1">{p.ancestor_name}</h4>
+                        {p.ancestor_registration && (
+                          <p className="text-xs text-slate-400">{p.ancestor_registration}</p>
                         )}
                       </div>
-                    )}
+                    ))}
                     
-                    {pedigree.dam_name && (
-                      <div className="bg-[#0A1628] rounded-xl p-6 border border-white/10">
+                    {pedigree.filter(p => p.position === 'dam').map((p, i) => (
+                      <div key={i} className="bg-[#0A1628] rounded-xl p-6 border border-white/10">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="w-3 h-3 rounded-full bg-[#E91E63]"></div>
                           <span className="text-sm text-slate-400 uppercase tracking-wider">Dam</span>
                         </div>
-                        <h4 className="font-semibold text-white text-lg mb-1">{pedigree.dam_name}</h4>
-                        {pedigree.dam_registration && (
-                          <p className="text-xs text-slate-400">{pedigree.dam_registration}</p>
+                        <h4 className="font-semibold text-white text-lg mb-1">{p.ancestor_name}</h4>
+                        {p.ancestor_registration && (
+                          <p className="text-xs text-slate-400">{p.ancestor_registration}</p>
                         )}
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
                 
