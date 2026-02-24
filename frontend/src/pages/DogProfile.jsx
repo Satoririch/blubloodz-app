@@ -14,7 +14,7 @@ const DogProfile = () => {
   const [dog, setDog] = useState(null);
   const [owner, setOwner] = useState(null);
   const [healthRecords, setHealthRecords] = useState([]);
-  const [pedigree, setPedigree] = useState(null);
+  const [pedigree, setPedigree] = useState([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
