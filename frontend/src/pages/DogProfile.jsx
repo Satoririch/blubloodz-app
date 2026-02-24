@@ -156,49 +156,56 @@ const DogProfile = () => {
     try {
       const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
       const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-      const pedigreeBody = {
-        dog_id: dog.id,
-        sire_name: verificationResult.sire?.name || null,
-        dam_name: verificationResult.dam?.name || null,
-        lineage: {
-          sire: verificationResult.sire || null,
-          dam: verificationResult.dam || null,
-          pedigree_number: verificationResult.pedigree_number || null,
-          inbreeding_coefficient: verificationResult.inbreeding_coefficient || null
-        },
-        verification_source: 'canecorsopedigree.com',
-        verification_status: 'verified'
+      const token = (await supabase.auth.getSession()).data.session.access_token;
+      const headers = {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        'Authorization': 'Bearer ' + token,
+        'Prefer': 'return=minimal'
       };
 
-      const pedigreeRes = await fetch(supabaseUrl + '/rest/v1/pedigrees', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseKey,
-          'Authorization': 'Bearer ' + (await supabase.auth.getSession()).data.session.access_token,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(pedigreeBody)
-      });
+      const pedigreeRows = [];
+      if (verificationResult.sire?.name) {
+        pedigreeRows.push({
+          dog_id: dog.id,
+          ancestor_name: verificationResult.sire.name,
+          ancestor_registration: verificationResult.pedigree_number || null,
+          generation: 1,
+          position: 'sire',
+          titles: verificationResult.titles || null,
+          source: 'canecorsopedigree.com'
+        });
+      }
+      if (verificationResult.dam?.name) {
+        pedigreeRows.push({
+          dog_id: dog.id,
+          ancestor_name: verificationResult.dam.name,
+          ancestor_registration: null,
+          generation: 1,
+          position: 'dam',
+          titles: null,
+          source: 'canecorsopedigree.com'
+        });
+      }
 
-      if (!pedigreeRes.ok) {
-        const errText = await pedigreeRes.text();
-        setVerificationError('Pedigree save failed: ' + errText);
-        setSaving(false);
-        return;
+      if (pedigreeRows.length > 0) {
+        const pedigreeRes = await fetch(supabaseUrl + '/rest/v1/pedigrees', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(pedigreeRows)
+        });
+        if (!pedigreeRes.ok) {
+          const errText = await pedigreeRes.text();
+          setVerificationError('Pedigree save failed: ' + errText);
+          setSaving(false);
+          return;
+        }
       }
 
       const trustScore = calculateTrustScore(verificationResult);
-
       await fetch(supabaseUrl + '/rest/v1/dogs?id=eq.' + dog.id, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseKey,
-          'Authorization': 'Bearer ' + (await supabase.auth.getSession()).data.session.access_token,
-          'Prefer': 'return=minimal'
-        },
+        headers: headers,
         body: JSON.stringify({ trust_score: trustScore })
       });
 
