@@ -367,30 +367,18 @@ const DogProfile = () => {
 
             {user?.id === dog.owner_id && (
               <div style={{ margin: '24px 0', padding: '20px', background: '#1a1a2e', borderRadius: '12px', border: '1px solid #2d2d44' }}>
-                {pedigree.length > 0 ? (
-                  // Saved pedigree rows exist — show verified data
-                  // Schema: each ancestor is a separate row with ancestor_name, ancestor_registration, position
-                  <div data-testid="verified-pedigree-section">
-                    <h3 style={{ color: '#c9a94e', margin: '0 0 4px 0', fontSize: '18px' }}>Verified Pedigree</h3>
-                    <p style={{ color: '#4ade80', margin: '0 0 16px 0', fontSize: '13px' }}>
-                      ✅ Verified from {pedigree[0].source || pedigree[0].verification_source || 'canecorsopedigree.com'}
-                    </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-                      {pedigree.map((row, idx) => (
-                        <div key={row.id || idx} style={{ padding: '12px', background: '#0d1a2e', borderRadius: '8px', border: '1px solid #1a3a5f' }} data-testid={`pedigree-ancestor-${idx}`}>
-                          <span style={{ color: '#999', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            {row.position || 'Ancestor'}
-                          </span>
-                          <p style={{ color: '#4ade80', margin: '4px 0 0', fontWeight: 'bold' }}>{row.ancestor_name}</p>
-                          {row.ancestor_registration && (
-                            <p style={{ color: '#aaa', margin: '2px 0 0', fontSize: '12px' }}>{row.ancestor_registration}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                {pedigreeRows && pedigreeRows.length > 0 && (
+                  <div style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid #4ade80', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+                    <h4 style={{ color: '#4ade80', marginBottom: '12px' }}>✅ Verified Pedigree</h4>
+                    {pedigreeRows.map((row, i) => (
+                      <div key={i} style={{ marginBottom: '8px', color: '#fff' }}>
+                        <strong style={{ textTransform: 'capitalize' }}>{row.position}:</strong> {row.ancestor_name} {row.ancestor_registration ? '(' + row.ancestor_registration + ')' : ''}
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  // No saved pedigree — show verify input and result
+                )}
+                {/* Verify pedigree input section */}
+                {(!pedigreeRows || pedigreeRows.length === 0) && (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                       <div>
