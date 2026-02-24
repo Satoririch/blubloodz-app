@@ -269,20 +269,26 @@ const DogProfile = () => {
               </h1>
               <p className="text-2xl text-slate-400 mb-6">{dog.breed}</p>
               
-              {badge && (
-                <div className="mb-6">
-                  <span 
-                    className="inline-block px-4 py-2 rounded-full text-lg font-semibold border-2"
-                    style={{ 
-                      color: badge.color, 
-                      borderColor: badge.color,
-                      backgroundColor: badge.color + '20'
-                    }}
-                  >
-                    {badge.text}
+              <div className="mb-6">
+                <span className="text-slate-400 text-sm block mb-1">Trust Score</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl font-bold" style={{ color: '#C5A55A' }}>
+                    {dog.trust_score ?? 0}
                   </span>
+                  {badge && (
+                    <span
+                      className="inline-block px-3 py-1 rounded-full text-sm font-semibold border"
+                      style={{
+                        color: badge.color,
+                        borderColor: badge.color,
+                        backgroundColor: badge.color + '20'
+                      }}
+                    >
+                      {badge.text}
+                    </span>
+                  )}
                 </div>
-              )}
+              </div>
               
               <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl p-6 mb-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Details</h3>
