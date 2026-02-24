@@ -496,8 +496,8 @@ const DogProfile = () => {
             </div>
           </div>
           
-          {pedigree && (
-            <div>
+          {pedigree.length > 0 && (
+            <div data-testid="pedigree-section">
               <h2 
                 className="text-3xl font-bold text-white mb-6"
                 style={{ fontFamily: 'Playfair Display, serif' }}
@@ -517,31 +517,41 @@ const DogProfile = () => {
                   </div>
                   
                   <div className="md:col-span-2 space-y-4">
-                    {pedigree.sire_name && (
-                      <div className="bg-[#0A1628] rounded-xl p-6 border border-white/10">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 rounded-full bg-[#3498DB]"></div>
-                          <span className="text-sm text-slate-400 uppercase tracking-wider">Sire</span>
-                        </div>
-                        <h4 className="font-semibold text-white text-lg mb-1">{pedigree.sire_name}</h4>
-                        {pedigree.sire_registration && (
-                          <p className="text-xs text-slate-400">{pedigree.sire_registration}</p>
+                    {pedigree.map((row, idx) => (
+                      <React.Fragment key={row.id || idx}>
+                        {row.sire_name && (
+                          <div className="bg-[#0A1628] rounded-xl p-6 border border-white/10" data-testid={`pedigree-sire-${idx}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-3 h-3 rounded-full bg-[#3498DB]"></div>
+                              <span className="text-sm text-slate-400 uppercase tracking-wider">Sire</span>
+                              {row.verification_status === 'verified' && (
+                                <span className="text-xs text-green-400 ml-2">✓ Verified</span>
+                              )}
+                            </div>
+                            <h4 className="font-semibold text-white text-lg mb-1">{row.sire_name}</h4>
+                            {(row.lineage?.sire?.registration || row.sire_registration) && (
+                              <p className="text-xs text-slate-400">{row.lineage?.sire?.registration || row.sire_registration}</p>
+                            )}
+                          </div>
                         )}
-                      </div>
-                    )}
-                    
-                    {pedigree.dam_name && (
-                      <div className="bg-[#0A1628] rounded-xl p-6 border border-white/10">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 rounded-full bg-[#E91E63]"></div>
-                          <span className="text-sm text-slate-400 uppercase tracking-wider">Dam</span>
-                        </div>
-                        <h4 className="font-semibold text-white text-lg mb-1">{pedigree.dam_name}</h4>
-                        {pedigree.dam_registration && (
-                          <p className="text-xs text-slate-400">{pedigree.dam_registration}</p>
+                        
+                        {row.dam_name && (
+                          <div className="bg-[#0A1628] rounded-xl p-6 border border-white/10" data-testid={`pedigree-dam-${idx}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-3 h-3 rounded-full bg-[#E91E63]"></div>
+                              <span className="text-sm text-slate-400 uppercase tracking-wider">Dam</span>
+                              {row.verification_status === 'verified' && (
+                                <span className="text-xs text-green-400 ml-2">✓ Verified</span>
+                              )}
+                            </div>
+                            <h4 className="font-semibold text-white text-lg mb-1">{row.dam_name}</h4>
+                            {(row.lineage?.dam?.registration || row.dam_registration) && (
+                              <p className="text-xs text-slate-400">{row.lineage?.dam?.registration || row.dam_registration}</p>
+                            )}
+                          </div>
                         )}
-                      </div>
-                    )}
+                      </React.Fragment>
+                    ))}
                   </div>
                 </div>
                 
