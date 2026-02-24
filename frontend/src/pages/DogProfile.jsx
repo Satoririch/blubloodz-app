@@ -62,15 +62,12 @@ const DogProfile = () => {
       setHealthRecords(healthData || []);
       
       // Fetch pedigree — returns array (multiple ancestor rows possible)
-      const { data: pedigreeData, error: pedigreeError } = await supabase
+      const { data: pedigreeData } = await supabase
         .from('pedigrees')
         .select('*')
-        .eq('dog_id', dogId)
-        .order('created_at', { ascending: false });
+        .eq('dog_id', dogId);
 
-      if (!pedigreeError) {
-        setPedigree(pedigreeData || []);
-      }
+      setPedigreeRows(pedigreeData || []);
       
     } catch (error) {
       console.error('Error fetching dog data:', error);
