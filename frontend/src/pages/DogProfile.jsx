@@ -61,15 +61,15 @@ const DogProfile = () => {
       if (healthError) throw healthError;
       setHealthRecords(healthData || []);
       
-      // Fetch pedigree
+      // Fetch pedigree — returns array (multiple ancestor rows possible)
       const { data: pedigreeData, error: pedigreeError } = await supabase
         .from('pedigrees')
         .select('*')
         .eq('dog_id', dogId)
-        .single();
-      
-      if (!pedigreeError && pedigreeData) {
-        setPedigree(pedigreeData);
+        .order('created_at', { ascending: false });
+
+      if (!pedigreeError) {
+        setPedigree(pedigreeData || []);
       }
       
     } catch (error) {
