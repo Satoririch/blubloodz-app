@@ -365,87 +365,126 @@ const DogProfile = () => {
 
             {user?.id === dog.owner_id && (
               <div style={{ margin: '24px 0', padding: '20px', background: '#1a1a2e', borderRadius: '12px', border: '1px solid #2d2d44' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                {pedigree.length > 0 ? (
+                  // Saved pedigree rows exist — show verified data
                   <div>
-                    <h3 style={{ color: '#c9a94e', margin: '0 0 4px 0', fontSize: '18px' }}>Pedigree Verification</h3>
-                    <p style={{ color: '#999', margin: '0 0 12px 0', fontSize: '14px' }}>
-                      {verificationResult ? 'Verification complete — data pulled from canecorsopedigree.com' : 'Enter your dog\'s canecorsopedigree.com ID to pull verified health records and pedigree data.'}
+                    <h3 style={{ color: '#c9a94e', margin: '0 0 4px 0', fontSize: '18px' }}>Verified Pedigree</h3>
+                    <p style={{ color: '#4ade80', margin: '0 0 16px 0', fontSize: '13px' }}>
+                      ✅ Verified from {pedigree[0].verification_source || 'canecorsopedigree.com'}
                     </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                      {pedigree.flatMap((row, rowIdx) =>
+                        [
+                          row.sire_name && {
+                            position: 'Sire',
+                            ancestor_name: row.sire_name,
+                            ancestor_registration: row.lineage?.sire?.registration || row.sire_registration || null,
+                            key: `${rowIdx}-sire`
+                          },
+                          row.dam_name && {
+                            position: 'Dam',
+                            ancestor_name: row.dam_name,
+                            ancestor_registration: row.lineage?.dam?.registration || row.dam_registration || null,
+                            key: `${rowIdx}-dam`
+                          }
+                        ].filter(Boolean)
+                      ).map(({ position, ancestor_name, ancestor_registration, key }) => (
+                        <div key={key} style={{ padding: '12px', background: '#0d1a2e', borderRadius: '8px', border: '1px solid #1a3a5f' }}>
+                          <span style={{ color: '#999', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{position}</span>
+                          <p style={{ color: '#4ade80', margin: '4px 0 0', fontWeight: 'bold' }}>{ancestor_name}</p>
+                          {ancestor_registration && (
+                            <p style={{ color: '#aaa', margin: '2px 0 0', fontSize: '12px' }}>{ancestor_registration}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  {!verificationResult && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                      <input
-                        type="text"
-                        value={pedigreeId}
-                        onChange={(e) => setPedigreeId(e.target.value)}
-                        placeholder="e.g. 115752"
-                        style={{
-                          padding: '10px 14px',
-                          background: '#0d0d1a',
-                          border: '1px solid #2d2d44',
-                          borderRadius: '8px',
-                          color: '#fff',
-                          fontSize: '14px',
-                          width: '160px'
-                        }}
-                      />
-                      <button
-                        onClick={handleVerifyPedigree}
-                        disabled={verifying}
-                        style={{
-                          padding: '10px 24px',
-                          background: verifying ? '#555' : 'linear-gradient(135deg, #c9a94e, #b8962d)',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: verifying ? 'not-allowed' : 'pointer',
-                          fontWeight: 'bold',
-                          fontSize: '14px'
-                        }}
-                      >
-                        {verifying ? 'Verifying...' : '🔍 Verify Pedigree'}
-                      </button>
+                ) : (
+                  // No saved pedigree — show verify input and result
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <h3 style={{ color: '#c9a94e', margin: '0 0 4px 0', fontSize: '18px' }}>Pedigree Verification</h3>
+                        <p style={{ color: '#999', margin: '0 0 12px 0', fontSize: '14px' }}>
+                          {verificationResult ? 'Verification complete — data pulled from canecorsopedigree.com' : 'Enter your dog\'s canecorsopedigree.com ID to pull verified health records and pedigree data.'}
+                        </p>
+                      </div>
+                      {!verificationResult && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                          <input
+                            type="text"
+                            value={pedigreeId}
+                            onChange={(e) => setPedigreeId(e.target.value)}
+                            placeholder="e.g. 115752"
+                            style={{
+                              padding: '10px 14px',
+                              background: '#0d0d1a',
+                              border: '1px solid #2d2d44',
+                              borderRadius: '8px',
+                              color: '#fff',
+                              fontSize: '14px',
+                              width: '160px'
+                            }}
+                          />
+                          <button
+                            onClick={handleVerifyPedigree}
+                            disabled={verifying}
+                            style={{
+                              padding: '10px 24px',
+                              background: verifying ? '#555' : 'linear-gradient(135deg, #c9a94e, #b8962d)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: verifying ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold',
+                              fontSize: '14px'
+                            }}
+                          >
+                            {verifying ? 'Verifying...' : '🔍 Verify Pedigree'}
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                {verificationError && (
-                  <p style={{ color: '#ff6b6b', marginTop: '12px', fontSize: '14px' }}>{verificationError}</p>
-                )}
-                {verificationResult && (
-                  <div style={{ marginTop: '16px', padding: '16px', background: '#0d0d1a', borderRadius: '8px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                      <div><span style={{ color: '#999', fontSize: '12px' }}>Registered Name</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.registered_name}</p></div>
-                      <div><span style={{ color: '#999', fontSize: '12px' }}>Sire</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.sire?.name || 'Unknown'}</p></div>
-                      <div><span style={{ color: '#999', fontSize: '12px' }}>Dam</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.dam?.name || 'Unknown'}</p></div>
-                      <div><span style={{ color: '#999', fontSize: '12px' }}>HD (Hips)</span><p style={{ color: verificationResult.hd_score ? '#4ade80' : '#999', margin: '4px 0 0', fontWeight: 'bold' }}>{verificationResult.hd_score || 'Not tested'}</p></div>
-                      <div><span style={{ color: '#999', fontSize: '12px' }}>ED (Elbows)</span><p style={{ color: verificationResult.ed_score ? '#4ade80' : '#999', margin: '4px 0 0', fontWeight: 'bold' }}>{verificationResult.ed_score || 'Not tested'}</p></div>
-                      <div><span style={{ color: '#999', fontSize: '12px' }}>DSRA</span><p style={{ color: verificationResult.dsra_certified ? '#4ade80' : '#999', margin: '4px 0 0', fontWeight: 'bold' }}>{verificationResult.dsra_result || 'Not tested'}</p></div>
-                      <div><span style={{ color: '#999', fontSize: '12px' }}>Color</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.color || 'Unknown'}</p></div>
-                      <div><span style={{ color: '#999', fontSize: '12px' }}>Inbreeding</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.inbreeding_coefficient ? verificationResult.inbreeding_coefficient.toFixed(2) + '%' : 'Unknown'}</p></div>
-                    </div>
-                    <p style={{ color: '#4ade80', marginTop: '16px', fontSize: '13px' }}>✅ Verified from canecorsopedigree.com at {new Date(verificationResult.verified_at).toLocaleString()}</p>
-                    {!saved ? (
-                      <button
-                        onClick={handleSaveVerification}
-                        disabled={saving}
-                        style={{
-                          marginTop: '16px',
-                          padding: '10px 24px',
-                          background: saving ? '#555' : 'linear-gradient(135deg, #4ade80, #22c55e)',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: saving ? 'not-allowed' : 'pointer',
-                          fontWeight: 'bold',
-                          fontSize: '14px'
-                        }}
-                      >
-                        {saving ? 'Saving...' : '💾 Save to Profile'}
-                      </button>
-                    ) : (
-                      <p style={{ color: '#4ade80', marginTop: '16px', fontWeight: 'bold' }}>✅ Verified data saved to profile!</p>
+                    {verificationError && (
+                      <p style={{ color: '#ff6b6b', marginTop: '12px', fontSize: '14px' }}>{verificationError}</p>
                     )}
-                  </div>
+                    {verificationResult && (
+                      <div style={{ marginTop: '16px', padding: '16px', background: '#0d0d1a', borderRadius: '8px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Registered Name</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.registered_name}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Sire</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.sire?.name || 'Unknown'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Dam</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.dam?.name || 'Unknown'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>HD (Hips)</span><p style={{ color: verificationResult.hd_score ? '#4ade80' : '#999', margin: '4px 0 0', fontWeight: 'bold' }}>{verificationResult.hd_score || 'Not tested'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>ED (Elbows)</span><p style={{ color: verificationResult.ed_score ? '#4ade80' : '#999', margin: '4px 0 0', fontWeight: 'bold' }}>{verificationResult.ed_score || 'Not tested'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>DSRA</span><p style={{ color: verificationResult.dsra_certified ? '#4ade80' : '#999', margin: '4px 0 0', fontWeight: 'bold' }}>{verificationResult.dsra_result || 'Not tested'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Color</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.color || 'Unknown'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Inbreeding</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.inbreeding_coefficient ? verificationResult.inbreeding_coefficient.toFixed(2) + '%' : 'Unknown'}</p></div>
+                        </div>
+                        <p style={{ color: '#4ade80', marginTop: '16px', fontSize: '13px' }}>✅ Verified from canecorsopedigree.com at {new Date(verificationResult.verified_at).toLocaleString()}</p>
+                        {!saved ? (
+                          <button
+                            onClick={handleSaveVerification}
+                            disabled={saving}
+                            style={{
+                              marginTop: '16px',
+                              padding: '10px 24px',
+                              background: saving ? '#555' : 'linear-gradient(135deg, #4ade80, #22c55e)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: saving ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold',
+                              fontSize: '14px'
+                            }}
+                          >
+                            {saving ? 'Saving...' : '💾 Save to Profile'}
+                          </button>
+                        ) : (
+                          <p style={{ color: '#4ade80', marginTop: '16px', fontWeight: 'bold' }}>✅ Verified data saved to profile!</p>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
