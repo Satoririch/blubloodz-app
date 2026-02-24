@@ -372,33 +372,21 @@ const DogProfile = () => {
               <div style={{ margin: '24px 0', padding: '20px', background: '#1a1a2e', borderRadius: '12px', border: '1px solid #2d2d44' }}>
                 {pedigree.length > 0 ? (
                   // Saved pedigree rows exist — show verified data
-                  <div>
+                  // Schema: each ancestor is a separate row with ancestor_name, ancestor_registration, position
+                  <div data-testid="verified-pedigree-section">
                     <h3 style={{ color: '#c9a94e', margin: '0 0 4px 0', fontSize: '18px' }}>Verified Pedigree</h3>
                     <p style={{ color: '#4ade80', margin: '0 0 16px 0', fontSize: '13px' }}>
-                      ✅ Verified from {pedigree[0].verification_source || 'canecorsopedigree.com'}
+                      ✅ Verified from {pedigree[0].source || pedigree[0].verification_source || 'canecorsopedigree.com'}
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-                      {pedigree.flatMap((row, rowIdx) =>
-                        [
-                          row.sire_name && {
-                            position: 'Sire',
-                            ancestor_name: row.sire_name,
-                            ancestor_registration: row.lineage?.sire?.registration || row.sire_registration || null,
-                            key: `${rowIdx}-sire`
-                          },
-                          row.dam_name && {
-                            position: 'Dam',
-                            ancestor_name: row.dam_name,
-                            ancestor_registration: row.lineage?.dam?.registration || row.dam_registration || null,
-                            key: `${rowIdx}-dam`
-                          }
-                        ].filter(Boolean)
-                      ).map(({ position, ancestor_name, ancestor_registration, key }) => (
-                        <div key={key} style={{ padding: '12px', background: '#0d1a2e', borderRadius: '8px', border: '1px solid #1a3a5f' }}>
-                          <span style={{ color: '#999', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{position}</span>
-                          <p style={{ color: '#4ade80', margin: '4px 0 0', fontWeight: 'bold' }}>{ancestor_name}</p>
-                          {ancestor_registration && (
-                            <p style={{ color: '#aaa', margin: '2px 0 0', fontSize: '12px' }}>{ancestor_registration}</p>
+                      {pedigree.map((row, idx) => (
+                        <div key={row.id || idx} style={{ padding: '12px', background: '#0d1a2e', borderRadius: '8px', border: '1px solid #1a3a5f' }} data-testid={`pedigree-ancestor-${idx}`}>
+                          <span style={{ color: '#999', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            {row.position || 'Ancestor'}
+                          </span>
+                          <p style={{ color: '#4ade80', margin: '4px 0 0', fontWeight: 'bold' }}>{row.ancestor_name}</p>
+                          {row.ancestor_registration && (
+                            <p style={{ color: '#aaa', margin: '2px 0 0', fontSize: '12px' }}>{row.ancestor_registration}</p>
                           )}
                         </div>
                       ))}
