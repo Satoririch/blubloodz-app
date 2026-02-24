@@ -175,6 +175,15 @@ const DogProfile = () => {
 
       const trustScore = calculateTrustScore(verificationResult);
       await supabase.from('dogs').update({ trust_score: trustScore }).eq('id', dog.id);
+      setDog(prev => ({ ...prev, trust_score: trustScore }));
+
+      // Refresh pedigree rows from DB so the saved data shows immediately
+      const { data: refreshed } = await supabase
+        .from('pedigrees')
+        .select('*')
+        .eq('dog_id', dog.id)
+        .order('created_at', { ascending: false });
+      if (refreshed) setPedigree(refreshed);
 
       setSaved(true);
     } catch (err) {
