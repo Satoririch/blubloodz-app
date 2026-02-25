@@ -43,7 +43,9 @@ const HealthTestCard = ({ test, isOwner, onUpload, uploading }) => {
       )}
 
       {test.documentUrl && (
+{test.documentUrl && (
         
+          href={test.documentUrl}        
           href={test.documentUrl}
           target="_blank"
           rel="noopener noreferrer"
