@@ -75,9 +75,20 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/create-litter"
+        element={
+          <ProtectedRoute requiredRole="breeder">
+            <CreateLitterPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="/litters" element={<BrowseLittersPage />} />
+
       <Route path="/breeder/:breederId" element={<BreederProfile />} />
       <Route path="/dog/:dogId" element={<DogProfile />} />
-      <Route path="/litter/:litterId" element={<LitterPage />} />
+      <Route path="/litter/:litterId" element={<LitterDetailPage />} />
       
       <Route path="/search" element={<SearchPage />} />
       
