@@ -72,6 +72,18 @@ const Layout = ({ children }) => {
                 Browse
               </Link>
 
+              {/* Litters — always visible */}
+              <Link
+                to="/litters"
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  location.pathname === '/litters' ? 'text-[#C5A55A]' : 'text-slate-300 hover:text-white'
+                }`}
+                data-testid="nav-litters"
+              >
+                <Package className="w-4 h-4" />
+                Litters
+              </Link>
+
               {user && roleNav.map((item) => {
                 const Icon = item.icon;
                 return (
