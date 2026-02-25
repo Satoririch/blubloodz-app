@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, UploadCloud } from 'lucide-react';
 
 const VerifiedBadge = ({ status = 'verified', text, size = 'default' }) => {
   const sizeClasses = {
@@ -18,7 +18,12 @@ const VerifiedBadge = ({ status = 'verified', text, size = 'default' }) => {
     verified: {
       icon: CheckCircle2,
       className: 'bg-[#2ECC71]/20 text-[#2ECC71] border border-[#2ECC71]/30',
-      defaultText: 'Verified'
+      defaultText: 'Auto-Verified'
+    },
+    uploaded: {
+      icon: UploadCloud,
+      className: 'bg-[#3498DB]/20 text-[#3498DB] border border-[#3498DB]/30',
+      defaultText: 'Uploaded'
     },
     pending: {
       icon: Clock,
