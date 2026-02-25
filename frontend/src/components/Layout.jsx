@@ -145,6 +145,17 @@ const Layout = ({ children }) => {
                 Browse
               </Link>
 
+              <Link
+                to="/litters"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-2 text-sm font-medium py-2 ${
+                  location.pathname === '/litters' ? 'text-[#C5A55A]' : 'text-slate-300'
+                }`}
+              >
+                <Package className="w-4 h-4" />
+                Litters
+              </Link>
+
               {user && roleNav.map((item) => {
                 const Icon = item.icon;
                 return (
