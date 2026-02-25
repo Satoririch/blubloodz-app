@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Menu, X, User, Search, Home, LogOut } from 'lucide-react';
+import { Shield, Menu, X, User, Search, Home, LogOut, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -72,6 +72,18 @@ const Layout = ({ children }) => {
                 Browse
               </Link>
 
+              {/* Litters — always visible */}
+              <Link
+                to="/litters"
+                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                  location.pathname === '/litters' ? 'text-[#C5A55A]' : 'text-slate-300 hover:text-white'
+                }`}
+                data-testid="nav-litters"
+              >
+                <Package className="w-4 h-4" />
+                Litters
+              </Link>
+
               {user && roleNav.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -131,6 +143,17 @@ const Layout = ({ children }) => {
               >
                 <Search className="w-4 h-4" />
                 Browse
+              </Link>
+
+              <Link
+                to="/litters"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-2 text-sm font-medium py-2 ${
+                  location.pathname === '/litters' ? 'text-[#C5A55A]' : 'text-slate-300'
+                }`}
+              >
+                <Package className="w-4 h-4" />
+                Litters
               </Link>
 
               {user && roleNav.map((item) => {
