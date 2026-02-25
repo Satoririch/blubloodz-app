@@ -15,6 +15,9 @@ import SearchPage from "@/pages/SearchPage";
 import TrustScorePage from "@/pages/TrustScorePage";
 import AddDogPage from "@/pages/AddDogPage";
 import AddLitterPage from "@/pages/AddLitterPage";
+import CreateLitterPage from "@/pages/CreateLitterPage";
+import BrowseLittersPage from "@/pages/BrowseLittersPage";
+import LitterDetailPage from "@/pages/LitterDetailPage";
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, profile, loading } = useAuth();
@@ -72,9 +75,20 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/create-litter"
+        element={
+          <ProtectedRoute requiredRole="breeder">
+            <CreateLitterPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="/litters" element={<BrowseLittersPage />} />
+
       <Route path="/breeder/:breederId" element={<BreederProfile />} />
       <Route path="/dog/:dogId" element={<DogProfile />} />
-      <Route path="/litter/:litterId" element={<LitterPage />} />
+      <Route path="/litter/:litterId" element={<LitterDetailPage />} />
       
       <Route path="/search" element={<SearchPage />} />
       
