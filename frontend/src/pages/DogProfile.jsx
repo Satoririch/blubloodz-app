@@ -194,7 +194,7 @@ const DogProfile = () => {
         .select('*')
         .eq('dog_id', dog.id)
         .order('created_at', { ascending: false });
-      if (refreshed) setPedigree(refreshed);
+      if (refreshed) setPedigreeRows(refreshed);
 
       setSaved(true);
     } catch (err) {
