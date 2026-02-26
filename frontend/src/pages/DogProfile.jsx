@@ -724,6 +724,91 @@ const DogProfile = () => {
               ))}
             </div>
           </div>
+
+          {/* Photo Gallery Section */}
+          <div className="mb-8" data-testid="photo-gallery-section">
+            <h2 
+              className="text-3xl font-bold text-white mb-6 flex items-center gap-2"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+            >
+              <Image className="w-8 h-8" />
+              Photos
+              {dogPhotos.length > 0 && (
+                <span className="ml-2 px-2 py-1 bg-[#C5A55A]/20 text-[#C5A55A] text-sm rounded-full">
+                  {dogPhotos.length}
+                </span>
+              )}
+            </h2>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {dogPhotos.filter(p => !p.is_primary).map((photo) => (
+                <div 
+                  key={photo.id} 
+                  className="relative group aspect-square bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden"
+                  data-testid={`gallery-photo-${photo.id}`}
+                >
+                  <img
+                    src={photo.url}
+                    alt={photo.caption || 'Gallery photo'}
+                    className="w-full h-full object-cover"
+                  />
+                  {isOwner && (
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button
+                        onClick={() => handleDeletePhoto(photo)}
+                        variant="destructive"
+                        size="sm"
+                        className="bg-red-500 hover:bg-red-600"
+                        data-testid={`delete-photo-${photo.id}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                  {photo.caption && (
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                      <p className="text-white text-xs truncate">{photo.caption}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Add Photos Button (Owner Only) */}
+              {isOwner && (
+                <div 
+                  className="aspect-square bg-[#1E3A5F]/20 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#C5A55A]/50 hover:bg-[#1E3A5F]/30 transition-all"
+                  onClick={() => !uploadingPhoto && galleryPhotoInputRef.current?.click()}
+                  data-testid="add-gallery-photos-btn"
+                >
+                  {uploadingPhoto && uploadingType === 'gallery' ? (
+                    <Loader2 className="w-8 h-8 text-[#C5A55A] animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="w-8 h-8 text-[#C5A55A] mb-2" />
+                      <span className="text-slate-400 text-sm">Add Photos</span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {dogPhotos.filter(p => !p.is_primary).length === 0 && !isOwner && (
+              <div className="text-center py-12 bg-[#1E3A5F]/20 rounded-xl border border-white/10">
+                <Image className="w-12 h-12 text-slate-500 mx-auto mb-3" />
+                <p className="text-slate-400">No photos yet</p>
+              </div>
+            )}
+
+            <input
+              ref={galleryPhotoInputRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+              multiple
+              onChange={handleGalleryPhotoUpload}
+              className="hidden"
+              data-testid="gallery-photo-input"
+            />
+          </div>
           
           {pedigree.length > 0 && (
             <div data-testid="pedigree-section">
