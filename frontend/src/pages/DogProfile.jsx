@@ -22,6 +22,11 @@ const DogProfile = () => {
   const [pedigreeId, setPedigreeId] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [dogPhotos, setDogPhotos] = useState([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingType, setUploadingType] = useState(null);
+  const profilePhotoInputRef = useRef(null);
+  const galleryPhotoInputRef = useRef(null);
   
   useEffect(() => {
     fetchDogData();
