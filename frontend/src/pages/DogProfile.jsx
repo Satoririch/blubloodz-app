@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import HealthTestCard from '@/components/HealthTestCard';
-import { ArrowLeft, Award, Calendar, Weight, FileText } from 'lucide-react';
+import { ArrowLeft, Award, Calendar, Weight, FileText, Camera, Plus, Trash2, Loader2, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
