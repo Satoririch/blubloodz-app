@@ -73,6 +73,15 @@ const DogProfile = () => {
         .eq('dog_id', dogId);
 
       setPedigreeRows(pedigreeData || []);
+
+      // Fetch gallery photos
+      const { data: photos } = await supabase
+        .from('dog_photos')
+        .select('*')
+        .eq('dog_id', dogId)
+        .order('sort_order', { ascending: true });
+
+      if (photos) setDogPhotos(photos);
       
     } catch (error) {
       console.error('Error fetching dog data:', error);
