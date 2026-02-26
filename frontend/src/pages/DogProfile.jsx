@@ -810,7 +810,7 @@ const DogProfile = () => {
             />
           </div>
           
-          {pedigree.length > 0 && (
+          {pedigreeRows.length > 0 && (
             <div data-testid="pedigree-section">
               <h2 
                 className="text-3xl font-bold text-white mb-6"
@@ -831,7 +831,7 @@ const DogProfile = () => {
                   </div>
                   
                   <div className="md:col-span-2 space-y-4">
-                    {pedigree.map((row, idx) => {
+                    {pedigreeRows.map((row, idx) => {
                       const isSire = row.position?.toLowerCase() === 'sire';
                       const isDam = row.position?.toLowerCase() === 'dam';
                       return (
