@@ -215,6 +215,199 @@ const DogProfile = () => {
     return Math.min(score, 100);
   };
 
+  const handleProfilePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !dog || !user) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, WEBP, HEIC, or HEIF)');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setUploadingType('profile');
+
+    try {
+      const timestamp = Date.now();
+      const filePath = `${dog.id}/profile-${timestamp}-${file.name}`;
+
+      // Upload to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('dog-photos')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('dog-photos')
+        .getPublicUrl(filePath);
+
+      // Check if this is the first profile photo (for trust score bonus)
+      const isFirstPhoto = !dog.profile_photo_url;
+
+      // Update dogs table with profile photo URL
+      const newTrustScore = isFirstPhoto ? (dog.trust_score || 0) + 5 : dog.trust_score;
+      const { error: updateError } = await supabase
+        .from('dogs')
+        .update({ 
+          profile_photo_url: publicUrl,
+          trust_score: newTrustScore
+        })
+        .eq('id', dog.id);
+
+      if (updateError) throw updateError;
+
+      // Also insert into dog_photos table as primary
+      await supabase.from('dog_photos').insert({
+        dog_id: dog.id,
+        url: publicUrl,
+        uploaded_by: user.id,
+        is_primary: true,
+        sort_order: 0
+      });
+
+      // Update local state
+      setDog(prev => ({ ...prev, profile_photo_url: publicUrl, trust_score: newTrustScore }));
+      
+      if (isFirstPhoto) {
+        alert('Profile photo uploaded! +5 Trust Score bonus added.');
+      }
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      alert('Failed to upload photo. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+      setUploadingType(null);
+      if (profilePhotoInputRef.current) {
+        profilePhotoInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleGalleryPhotoUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !dog || !user) return;
+
+    setUploadingPhoto(true);
+    setUploadingType('gallery');
+
+    try {
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+      const maxSortOrder = dogPhotos.length > 0 
+        ? Math.max(...dogPhotos.map(p => p.sort_order)) + 1 
+        : 1;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Validate file type
+        if (!validTypes.includes(file.type)) {
+          console.warn(`Skipping ${file.name}: invalid file type`);
+          continue;
+        }
+
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+          console.warn(`Skipping ${file.name}: file too large`);
+          continue;
+        }
+
+        const timestamp = Date.now();
+        const filePath = `${dog.id}/gallery-${timestamp}-${file.name}`;
+
+        // Upload to Supabase storage
+        const { error: uploadError } = await supabase.storage
+          .from('dog-photos')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error(`Error uploading ${file.name}:`, uploadError);
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('dog-photos')
+          .getPublicUrl(filePath);
+
+        // Insert into dog_photos table
+        const { data: newPhoto, error: insertError } = await supabase
+          .from('dog_photos')
+          .insert({
+            dog_id: dog.id,
+            url: publicUrl,
+            uploaded_by: user.id,
+            is_primary: false,
+            sort_order: maxSortOrder + i
+          })
+          .select()
+          .single();
+
+        if (!insertError && newPhoto) {
+          setDogPhotos(prev => [...prev, newPhoto]);
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading gallery photos:', error);
+      alert('Failed to upload some photos. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+      setUploadingType(null);
+      if (galleryPhotoInputRef.current) {
+        galleryPhotoInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeletePhoto = async (photo) => {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+      // Extract file path from URL
+      const urlParts = photo.url.split('/dog-photos/');
+      const filePath = urlParts[1];
+
+      // Delete from storage
+      if (filePath) {
+        await supabase.storage
+          .from('dog-photos')
+          .remove([filePath]);
+      }
+
+      // Delete from dog_photos table
+      await supabase
+        .from('dog_photos')
+        .delete()
+        .eq('id', photo.id);
+
+      // If it was the profile photo, clear it from dogs table
+      if (photo.is_primary || photo.url === dog.profile_photo_url) {
+        await supabase
+          .from('dogs')
+          .update({ profile_photo_url: null })
+          .eq('id', dog.id);
+        setDog(prev => ({ ...prev, profile_photo_url: null }));
+      }
+
+      // Update local state
+      setDogPhotos(prev => prev.filter(p => p.id !== photo.id));
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      alert('Failed to delete photo. Please try again.');
+    }
+  };
+
+  const isOwner = user && dog && user.id === dog.owner_id;
+
   if (loading) {
     return (
       <Layout>
