@@ -50,7 +50,7 @@ const CreateLitterPage = () => {
     (async () => {
       const { data } = await supabase
         .from('dogs')
-        .select('id, registered_name, call_name, breed, sex, registration_number, trust_score, image_url')
+        .select('id, registered_name, call_name, breed, sex, registration_number')
         .eq('owner_id', user.id);
       setDogs(data || []);
       setDogsLoading(false);
