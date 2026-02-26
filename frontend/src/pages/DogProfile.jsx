@@ -255,7 +255,7 @@ const DogProfile = () => {
       const isFirstPhoto = !dog.profile_photo_url;
 
       // Update dogs table with profile photo URL
-      const newTrustScore = isFirstPhoto ? (dog.trust_score || 0) + 5 : dog.trust_score;
+      const newTrustScore = isFirstPhoto ? Math.min((dog.trust_score || 0) + 5, 100) : dog.trust_score;
       const { error: updateError } = await supabase
         .from('dogs')
         .update({ 
