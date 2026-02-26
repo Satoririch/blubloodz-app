@@ -43,8 +43,8 @@ const BrowseLittersPage = () => {
         .from('litters')
         .select(`
           *,
-          sire:dogs!litters_sire_id_fkey(id, registered_name, call_name, breed, trust_score, image_url),
-          dam:dogs!litters_dam_id_fkey(id, registered_name, call_name, breed, trust_score, image_url),
+          sire:dogs!litters_sire_id_fkey(id, registered_name, call_name, breed, image_url),
+          dam:dogs!litters_dam_id_fkey(id, registered_name, call_name, breed, image_url),
           breeder:users!litters_breeder_id_fkey(id, full_name, kennel_name, location)
         `)
         .order('created_at', { ascending: false });
