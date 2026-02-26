@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import HealthTestCard from '@/components/HealthTestCard';
-import { ArrowLeft, Award, Calendar, Weight, FileText, Shield } from 'lucide-react';
+import { ArrowLeft, Award, Calendar, Weight, FileText, Camera, Plus, Trash2, Loader2, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +14,7 @@ const DogProfile = () => {
   const [dog, setDog] = useState(null);
   const [owner, setOwner] = useState(null);
   const [healthRecords, setHealthRecords] = useState([]);
-  const [pedigree, setPedigree] = useState(null);
+  const [pedigreeRows, setPedigreeRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
@@ -22,8 +22,11 @@ const DogProfile = () => {
   const [pedigreeId, setPedigreeId] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [dogPhotos, setDogPhotos] = useState([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingType, setUploadingType] = useState(null);
+  const profilePhotoInputRef = useRef(null);
+  const galleryPhotoInputRef = useRef(null);
   
   useEffect(() => {
     fetchDogData();
@@ -33,6 +36,7 @@ const DogProfile = () => {
     try {
       setLoading(true);
       
+      // Fetch dog data
       const { data: dogData, error: dogError } = await supabase
         .from('dogs')
         .select('*')
@@ -42,6 +46,7 @@ const DogProfile = () => {
       if (dogError) throw dogError;
       setDog(dogData);
       
+      // Fetch owner data
       const { data: ownerData, error: ownerError } = await supabase
         .from('users')
         .select('*')
@@ -51,6 +56,7 @@ const DogProfile = () => {
       if (ownerError) throw ownerError;
       setOwner(ownerData);
       
+      // Fetch health records
       const { data: healthData, error: healthError } = await supabase
         .from('health_records')
         .select('*')
@@ -60,14 +66,22 @@ const DogProfile = () => {
       if (healthError) throw healthError;
       setHealthRecords(healthData || []);
       
-      const { data: pedigreeData, error: pedigreeError } = await supabase
+      // Fetch pedigree — returns array (multiple ancestor rows possible)
+      const { data: pedigreeData } = await supabase
         .from('pedigrees')
         .select('*')
         .eq('dog_id', dogId);
-      
-      if (!pedigreeError && pedigreeData && pedigreeData.length > 0) {
-        setPedigree(pedigreeData);
-      }
+
+      setPedigreeRows(pedigreeData || []);
+
+      // Fetch gallery photos
+      const { data: photos } = await supabase
+        .from('dog_photos')
+        .select('*')
+        .eq('dog_id', dogId)
+        .order('sort_order', { ascending: true });
+
+      if (photos) setDogPhotos(photos);
       
     } catch (error) {
       console.error('Error fetching dog data:', error);
@@ -84,162 +98,41 @@ const DogProfile = () => {
     const months = today.getMonth() - birthDate.getMonth();
     
     if (years > 0) {
-      return years + ' year' + (years > 1 ? 's' : '');
+      return `${years} year${years > 1 ? 's' : ''}`;
     }
-    return months + ' month' + (months > 1 ? 's' : '');
+    return `${months} month${months > 1 ? 's' : ''}`;
   };
   
-  const getTrustScoreInfo = (score) => {
-    if (!score || score === 0) return { label: 'Unverified', color: '#E74C3C', tier: null };
-    if (score >= 80) return { label: 'Gold Verified', color: '#C5A55A', tier: 'gold' };
-    if (score >= 60) return { label: 'Silver Verified', color: '#94A3B8', tier: 'silver' };
-    if (score >= 40) return { label: 'Bronze Verified', color: '#CD7F32', tier: 'bronze' };
-    return { label: 'Getting Started', color: '#F1C40F', tier: null };
+  const getTrustScoreBadge = (score) => {
+    if (!score) return null;
+    if (score >= 80) return { text: 'Gold Badge', color: '#C5A55A' };
+    if (score >= 60) return { text: 'Silver Badge', color: '#94A3B8' };
+    return null;
   };
-
+  
+  // Convert health records to the format expected by HealthTestCard
   const formatHealthTests = () => {
-    const categories = [
-      { type: 'OFA Hips', label: 'Hip Evaluation (OFA)' },
-      { type: 'PennHIP', label: 'Hip Evaluation (PennHIP)' },
-      { type: 'Deworming', label: 'Deworming Records' },
-      { type: 'Vaccinations', label: 'Vaccination Records' }
-    ];
+    const testTypes = ['OFA Hips', 'OFA Elbows', 'Cardiac', 'Eyes', 'DNA Panel', 'Patella'];
     
-    return categories.map(function(cat) {
-      var record = healthRecords.find(function(r) { return r.test_type === cat.type; });
+    return testTypes.map(testType => {
+      const record = healthRecords.find(r => r.test_type === testType);
       
       if (record) {
         return {
-          name: cat.label,
-          testType: cat.type,
-          status: record.verified ? 'verified' : 'uploaded',
-          result: record.result || 'Documented',
-          date: record.test_date,
-          source: record.source,
-          documentUrl: record.document_url
+          name: record.test_type,
+          status: record.verified ? 'verified' : 'pending',
+          result: record.result,
+          date: record.test_date
         };
       }
       
       return {
-        name: cat.label,
-        testType: cat.type,
+        name: testType,
         status: 'missing',
         result: 'Not Done',
-        date: null,
-        source: null,
-        documentUrl: null
+        date: null
       };
     });
-  };
-
-  const handleHealthUpload = async (testLabel, file) => {
-    if (!file || !dog || !user) return;
-
-    var labelToType = {
-      'Hip Evaluation (OFA)': 'OFA Hips',
-      'Hip Evaluation (PennHIP)': 'PennHIP',
-      'Deworming Records': 'Deworming',
-      'Vaccination Records': 'Vaccinations'
-    };
-    var testType = labelToType[testLabel];
-    if (!testType) return;
-
-    setUploading(true);
-    setUploadingType(testType);
-
-    try {
-      var fileExt = file.name.split('.').pop();
-      var fileName = dog.id + '/' + testType.replace(/\s+/g, '-').toLowerCase() + '-' + Date.now() + '.' + fileExt;
-      
-      var uploadResult = await supabase
-        .storage
-        .from('health-docs')
-        .upload(fileName, file);
-
-      if (uploadResult.error) throw uploadResult.error;
-
-      var urlResult = supabase
-        .storage
-        .from('health-docs')
-        .getPublicUrl(fileName);
-
-      var publicUrl = urlResult.data.publicUrl;
-
-      var existingRecord = healthRecords.find(function(r) { return r.test_type === testType; });
-
-      if (existingRecord) {
-        var updateResult = await supabase
-          .from('health_records')
-          .update({
-            document_url: publicUrl,
-            test_date: new Date().toISOString().split('T')[0],
-            source: 'breeder_upload',
-            result: 'Documented'
-          })
-          .eq('id', existingRecord.id);
-
-        if (updateResult.error) throw updateResult.error;
-      } else {
-        var insertResult = await supabase
-          .from('health_records')
-          .insert({
-            dog_id: dog.id,
-            test_type: testType,
-            result: 'Documented',
-            test_date: new Date().toISOString().split('T')[0],
-            source: 'breeder_upload',
-            verified: false,
-            document_url: publicUrl
-          });
-
-        if (insertResult.error) throw insertResult.error;
-      }
-
-      await recalculateTrustScore();
-      await fetchDogData();
-
-    } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Upload failed: ' + (error.message || 'Unknown error'));
-    } finally {
-      setUploading(false);
-      setUploadingType(null);
-    }
-  };
-
-  const recalculateTrustScore = async () => {
-    var score = 0;
-
-    var pedResult = await supabase
-      .from('pedigrees')
-      .select('position')
-      .eq('dog_id', dogId);
-
-    if (pedResult.data && pedResult.data.length > 0) {
-      var hasSire = pedResult.data.some(function(p) { return p.position === 'sire'; });
-      var hasDam = pedResult.data.some(function(p) { return p.position === 'dam'; });
-      if (hasSire) score += 20;
-      if (hasDam) score += 20;
-    }
-
-    var hrResult = await supabase
-      .from('health_records')
-      .select('test_type')
-      .eq('dog_id', dogId);
-
-    if (hrResult.data && hrResult.data.length > 0) {
-      var types = hrResult.data.map(function(r) { return r.test_type; });
-      if (types.includes('OFA Hips') || types.includes('PennHIP')) score += 25;
-      if (types.includes('Deworming')) score += 20;
-      if (types.includes('Vaccinations')) score += 15;
-    }
-
-    score = Math.min(score, 100);
-
-    await supabase
-      .from('dogs')
-      .update({ trust_score: score })
-      .eq('id', dogId);
   };
   
   const handleVerifyPedigree = async () => {
@@ -252,10 +145,10 @@ const DogProfile = () => {
         setVerifying(false);
         return;
       }
-      var response = await fetch(
-        'https://blubloodz-scraper.vercel.app/api/verify-pedigree?id=' + encodeURIComponent(pedigreeId.trim())
+      const response = await fetch(
+        `https://blubloodz-scraper.vercel.app/api/verify-pedigree?id=${encodeURIComponent(pedigreeId.trim())}`
       );
-      var data = await response.json();
+      const data = await response.json();
       if (data.success && data.data) {
         setVerificationResult(data.data);
       } else {
@@ -272,57 +165,36 @@ const DogProfile = () => {
     setSaving(true);
     setVerificationError(null);
     try {
-      var supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-      var supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-      var session = await supabase.auth.getSession();
-      var token = session.data.session.access_token;
-      var headers = {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': 'Bearer ' + token,
-        'Prefer': 'return=minimal'
-      };
-
-      var pedigreeRows = [];
-      if (verificationResult.sire && verificationResult.sire.name) {
-        pedigreeRows.push({
-          dog_id: dog.id,
-          ancestor_name: verificationResult.sire.name,
-          ancestor_registration: verificationResult.pedigree_number || null,
-          generation: 1,
-          position: 'sire',
-          titles: verificationResult.titles || null,
-          source: 'canecorsopedigree.com'
-        });
-      }
-      if (verificationResult.dam && verificationResult.dam.name) {
-        pedigreeRows.push({
-          dog_id: dog.id,
-          ancestor_name: verificationResult.dam.name,
-          ancestor_registration: null,
-          generation: 1,
-          position: 'dam',
-          titles: null,
-          source: 'canecorsopedigree.com'
-        });
+      const { error: pedigreeError } = await supabase.from('pedigrees').insert({
+        dog_id: dog.id,
+        sire_name: verificationResult.sire?.name || null,
+        dam_name: verificationResult.dam?.name || null,
+        lineage: {
+          sire: verificationResult.sire || null,
+          dam: verificationResult.dam || null,
+          pedigree_number: verificationResult.pedigree_number || null,
+          inbreeding_coefficient: verificationResult.inbreeding_coefficient || null
+        },
+        verification_source: 'canecorsopedigree.com',
+        verification_status: 'verified'
+      });
+      if (pedigreeError) {
+        setVerificationError('Pedigree save failed: ' + pedigreeError.message);
+        setSaving(false);
+        return;
       }
 
-      if (pedigreeRows.length > 0) {
-        var pedigreeRes = await fetch(supabaseUrl + '/rest/v1/pedigrees', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify(pedigreeRows)
-        });
-        if (!pedigreeRes.ok) {
-          var errText = await pedigreeRes.text();
-          setVerificationError('Pedigree save failed: ' + errText);
-          setSaving(false);
-          return;
-        }
-      }
+      const trustScore = calculateTrustScore(verificationResult);
+      await supabase.from('dogs').update({ trust_score: trustScore }).eq('id', dog.id);
+      setDog(prev => ({ ...prev, trust_score: trustScore }));
 
-      await recalculateTrustScore();
-      await fetchDogData();
+      // Refresh pedigree rows from DB so the saved data shows immediately
+      const { data: refreshed } = await supabase
+        .from('pedigrees')
+        .select('*')
+        .eq('dog_id', dog.id)
+        .order('created_at', { ascending: false });
+      if (refreshed) setPedigreeRows(refreshed);
 
       setSaved(true);
     } catch (err) {
@@ -330,6 +202,211 @@ const DogProfile = () => {
     }
     setSaving(false);
   };
+
+  const calculateTrustScore = (data) => {
+    let score = 0;
+    if (data.sire?.name) score += 15;
+    if (data.dam?.name) score += 15;
+    if (data.pedigree_number) score += 10;
+    if (data.hd_score && data.hd_score !== 'unknown') score += 20;
+    if (data.ed_score && data.ed_score !== 'Unknown' && data.ed_score !== 'unknown') score += 15;
+    if (data.dsra_result && data.dsra_result !== 'UNKNOWN') score += 15;
+    if (data.dvl2_result && data.dvl2_result !== 'UNKNOWN') score += 10;
+    return Math.min(score, 100);
+  };
+
+  const handleProfilePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !dog || !user) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, WEBP, HEIC, or HEIF)');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setUploadingType('profile');
+
+    try {
+      const timestamp = Date.now();
+      const filePath = `${dog.id}/profile-${timestamp}-${file.name}`;
+
+      // Upload to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('dog-photos')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('dog-photos')
+        .getPublicUrl(filePath);
+
+      // Check if this is the first profile photo (for trust score bonus)
+      const isFirstPhoto = !dog.profile_photo_url;
+
+      // Update dogs table with profile photo URL
+      const newTrustScore = isFirstPhoto ? (dog.trust_score || 0) + 5 : dog.trust_score;
+      const { error: updateError } = await supabase
+        .from('dogs')
+        .update({ 
+          profile_photo_url: publicUrl,
+          trust_score: newTrustScore
+        })
+        .eq('id', dog.id);
+
+      if (updateError) throw updateError;
+
+      // Also insert into dog_photos table as primary
+      await supabase.from('dog_photos').insert({
+        dog_id: dog.id,
+        url: publicUrl,
+        uploaded_by: user.id,
+        is_primary: true,
+        sort_order: 0
+      });
+
+      // Update local state
+      setDog(prev => ({ ...prev, profile_photo_url: publicUrl, trust_score: newTrustScore }));
+      
+      if (isFirstPhoto) {
+        alert('Profile photo uploaded! +5 Trust Score bonus added.');
+      }
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      alert('Failed to upload photo. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+      setUploadingType(null);
+      if (profilePhotoInputRef.current) {
+        profilePhotoInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleGalleryPhotoUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !dog || !user) return;
+
+    setUploadingPhoto(true);
+    setUploadingType('gallery');
+
+    try {
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+      const maxSortOrder = dogPhotos.length > 0 
+        ? Math.max(...dogPhotos.map(p => p.sort_order)) + 1 
+        : 1;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Validate file type
+        if (!validTypes.includes(file.type)) {
+          console.warn(`Skipping ${file.name}: invalid file type`);
+          continue;
+        }
+
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+          console.warn(`Skipping ${file.name}: file too large`);
+          continue;
+        }
+
+        const timestamp = Date.now();
+        const filePath = `${dog.id}/gallery-${timestamp}-${file.name}`;
+
+        // Upload to Supabase storage
+        const { error: uploadError } = await supabase.storage
+          .from('dog-photos')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error(`Error uploading ${file.name}:`, uploadError);
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('dog-photos')
+          .getPublicUrl(filePath);
+
+        // Insert into dog_photos table
+        const { data: newPhoto, error: insertError } = await supabase
+          .from('dog_photos')
+          .insert({
+            dog_id: dog.id,
+            url: publicUrl,
+            uploaded_by: user.id,
+            is_primary: false,
+            sort_order: maxSortOrder + i
+          })
+          .select()
+          .single();
+
+        if (!insertError && newPhoto) {
+          setDogPhotos(prev => [...prev, newPhoto]);
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading gallery photos:', error);
+      alert('Failed to upload some photos. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+      setUploadingType(null);
+      if (galleryPhotoInputRef.current) {
+        galleryPhotoInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeletePhoto = async (photo) => {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+      // Extract file path from URL
+      const urlParts = photo.url.split('/dog-photos/');
+      const filePath = urlParts[1];
+
+      // Delete from storage
+      if (filePath) {
+        await supabase.storage
+          .from('dog-photos')
+          .remove([filePath]);
+      }
+
+      // Delete from dog_photos table
+      await supabase
+        .from('dog_photos')
+        .delete()
+        .eq('id', photo.id);
+
+      // If it was the profile photo, clear it from dogs table
+      if (photo.is_primary || photo.url === dog.profile_photo_url) {
+        await supabase
+          .from('dogs')
+          .update({ profile_photo_url: null })
+          .eq('id', dog.id);
+        setDog(prev => ({ ...prev, profile_photo_url: null }));
+      }
+
+      // Update local state
+      setDogPhotos(prev => prev.filter(p => p.id !== photo.id));
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      alert('Failed to delete photo. Please try again.');
+    }
+  };
+
+  const isOwner = user && dog && user.id === dog.owner_id;
 
   if (loading) {
     return (
@@ -351,29 +428,15 @@ const DogProfile = () => {
     );
   }
   
-  var trustInfo = getTrustScoreInfo(dog.trust_score);
-  var healthTests = formatHealthTests();
-  var isOwner = user && user.id === dog.owner_id;
-
-  var verifiedCount = healthTests.filter(function(t) { return t.status !== 'missing'; }).length;
-  var hasPedigree = pedigree && pedigree.length > 0;
-  var totalChecks = 5;
-  var completedChecks = (hasPedigree ? Math.min(pedigree.length, 2) : 0) + verifiedCount;
-
-  var scoreChecks = [
-    { label: 'Sire', pts: 20, done: hasPedigree && pedigree.some(function(p) { return p.position === 'sire'; }) },
-    { label: 'Dam', pts: 20, done: hasPedigree && pedigree.some(function(p) { return p.position === 'dam'; }) },
-    { label: 'Hips', pts: 25, done: healthRecords.some(function(r) { return r.test_type === 'OFA Hips' || r.test_type === 'PennHIP'; }) },
-    { label: 'Deworming', pts: 20, done: healthRecords.some(function(r) { return r.test_type === 'Deworming'; }) },
-    { label: 'Shots', pts: 15, done: healthRecords.some(function(r) { return r.test_type === 'Vaccinations'; }) }
-  ];
+  const badge = getTrustScoreBadge(dog.trust_score);
+  const healthTests = formatHealthTests();
   
   return (
     <Layout>
       <div className="min-h-screen bg-[#0A1628] py-12 px-6" data-testid="dog-profile-page">
         <div className="max-w-7xl mx-auto">
           <Button
-            onClick={function() { navigate(-1); }}
+            onClick={() => navigate(-1)}
             variant="ghost"
             className="text-slate-300 hover:text-white mb-6"
             data-testid="back-button"
@@ -382,85 +445,65 @@ const DogProfile = () => {
             Back
           </Button>
           
-          <div 
-            className="mb-8 rounded-xl p-6 border"
-            style={{ 
-              background: 'linear-gradient(135deg, ' + trustInfo.color + '15, ' + trustInfo.color + '05)',
-              borderColor: trustInfo.color + '40'
-            }}
-          >
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div 
-                  className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold"
-                  style={{ 
-                    background: 'linear-gradient(135deg, ' + trustInfo.color + ', ' + trustInfo.color + '80)',
-                    color: '#0A1628'
-                  }}
-                >
-                  {dog.trust_score || 0}
-                </div>
-                <div>
-                  <h3 className="text-white text-xl font-bold">{trustInfo.label}</h3>
-                  <p className="text-slate-400 text-sm">
-                    {completedChecks} of {totalChecks} verification checks completed
-                  </p>
-                </div>
-              </div>
-              
-              <div className="w-full md:w-64">
-                <div className="flex justify-between text-xs text-slate-400 mb-1">
-                  <span>Trust Score</span>
-                  <span>{dog.trust_score || 0}/100</span>
-                </div>
-                <div className="w-full bg-[#0A1628] rounded-full h-3 overflow-hidden">
-                  <div 
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ 
-                      width: (dog.trust_score || 0) + '%',
-                      background: 'linear-gradient(90deg, ' + trustInfo.color + ', ' + trustInfo.color + 'CC)'
-                    }}
-                  />
-                </div>
-                {isOwner && dog.trust_score < 100 && (
-                  <p className="text-xs mt-2" style={{ color: trustInfo.color }}>
-                    Upload health records below to increase your score
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4 pt-4 border-t" style={{ borderColor: trustInfo.color + '20' }}>
-              {scoreChecks.map(function(item, i) {
-                return (
-                  <div key={i} className="text-center">
-                    <div className={'text-xs font-medium mb-1 ' + (item.done ? 'text-[#2ECC71]' : 'text-slate-500')}>
-                      {item.done ? '\u2713' : '\u25CB'} {item.label}
-                    </div>
-                    <div className={'text-xs ' + (item.done ? 'text-[#2ECC71]' : 'text-slate-600')}>
-                      {item.done ? '+' + item.pts + ' pts' : item.pts + ' pts available'}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <div>
-              <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden h-96 flex items-center justify-center">
-                {dog.image_url ? (
-                  <img
-                    src={dog.image_url}
-                    alt={dog.registered_name}
-                    className="w-full h-full object-cover"
-                    data-testid="dog-main-image"
-                  />
+              <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden h-96 flex items-center justify-center relative group">
+                {dog.profile_photo_url ? (
+                  <>
+                    <img
+                      src={dog.profile_photo_url}
+                      alt={dog.registered_name}
+                      className="w-full h-full object-cover"
+                      data-testid="dog-main-image"
+                    />
+                    {isOwner && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                          onClick={() => profilePhotoInputRef.current?.click()}
+                          disabled={uploadingPhoto}
+                          className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A]"
+                          data-testid="change-profile-photo-btn"
+                        >
+                          {uploadingPhoto && uploadingType === 'profile' ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Camera className="w-4 h-4 mr-2" />
+                          )}
+                          Change Photo
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : isOwner ? (
+                  <div className="text-center">
+                    <Button
+                      onClick={() => profilePhotoInputRef.current?.click()}
+                      disabled={uploadingPhoto}
+                      className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A]"
+                      data-testid="upload-profile-photo-btn"
+                    >
+                      {uploadingPhoto && uploadingType === 'profile' ? (
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      ) : (
+                        <Camera className="w-5 h-5 mr-2" />
+                      )}
+                      Upload Profile Photo
+                    </Button>
+                    <p className="text-slate-400 text-sm mt-2">+5 Trust Score for first photo!</p>
+                  </div>
                 ) : (
                   <div className="text-[#C5A55A] text-6xl font-bold">
-                    {dog.registered_name ? dog.registered_name.charAt(0) : '?'}
+                    {dog.registered_name?.charAt(0) || '?'}
                   </div>
                 )}
+                <input
+                  ref={profilePhotoInputRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+                  onChange={handleProfilePhotoUpload}
+                  className="hidden"
+                  data-testid="profile-photo-input"
+                />
               </div>
             </div>
             
@@ -473,6 +516,32 @@ const DogProfile = () => {
                 {dog.call_name || dog.registered_name}
               </h1>
               <p className="text-2xl text-slate-400 mb-6">{dog.breed}</p>
+              
+              <div className="mb-6" data-testid="trust-score-section">
+                <span className="text-slate-400 text-sm block mb-1">Trust Score</span>
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="text-4xl font-bold" 
+                    style={{ color: '#C5A55A' }}
+                    data-testid="trust-score-value"
+                  >
+                    {dog.trust_score !== null && dog.trust_score !== undefined ? dog.trust_score : 0}
+                  </span>
+                  {badge && (
+                    <span
+                      className="inline-block px-3 py-1 rounded-full text-sm font-semibold border"
+                      style={{
+                        color: badge.color,
+                        borderColor: badge.color,
+                        backgroundColor: badge.color + '20'
+                      }}
+                      data-testid="trust-score-badge"
+                    >
+                      {badge.text}
+                    </span>
+                  )}
+                </div>
+              </div>
               
               <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl p-6 mb-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Details</h3>
@@ -521,12 +590,12 @@ const DogProfile = () => {
                 <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-white mb-4">Breeder</h3>
                   <div
-                    onClick={function() { navigate('/breeder/' + owner.id); }}
+                    onClick={() => navigate(`/breeder/${owner.id}`)}
                     className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                     data-testid="breeder-link"
                   >
                     <div className="w-12 h-12 rounded-full bg-[#C5A55A] flex items-center justify-center text-[#0A1628] font-bold text-xl">
-                      {owner.kennel_name ? owner.kennel_name.charAt(0) : (owner.full_name ? owner.full_name.charAt(0) : '?')}
+                      {owner.kennel_name?.charAt(0) || owner.full_name?.charAt(0) || '?'}
                     </div>
                     <div>
                       <p className="text-white font-medium">{owner.kennel_name || owner.full_name}</p>
@@ -540,125 +609,264 @@ const DogProfile = () => {
           
           <div className="mb-8">
             <h2 
-              className="text-3xl font-bold text-white mb-2 flex items-center gap-2"
+              className="text-3xl font-bold text-white mb-6 flex items-center gap-2"
               style={{ fontFamily: 'Playfair Display, serif' }}
             >
-              <Shield className="w-8 h-8 text-[#C5A55A]" />
-              Health Verification
+              <Award className="w-8 h-8" />
+              Health Test Results
             </h2>
-            <p className="text-slate-400 mb-6">
-              {isOwner 
-                ? "Upload your dog's health records to build trust and increase your verification score."
-                : 'Verified health records for this dog. Documents uploaded by the breeder.'
-              }
-            </p>
 
-            {isOwner && (
-              <div style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(197,165,90,0.1)', borderRadius: '0.75rem', border: '1px solid rgba(197,165,90,0.2)' }}>
-                <p className="text-sm text-[#C5A55A]">
-                  <strong>Tip:</strong> Upload OFA hip results, deworming records, and vaccination documents to maximize your trust score. Accepted formats: images and PDFs.
-                </p>
+            {user?.id === dog.owner_id && (
+              <div style={{ margin: '24px 0', padding: '20px', background: '#1a1a2e', borderRadius: '12px', border: '1px solid #2d2d44' }}>
+                {pedigreeRows && pedigreeRows.length > 0 && (
+                  <div style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid #4ade80', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+                    <h4 style={{ color: '#4ade80', marginBottom: '12px' }}>✅ Verified Pedigree</h4>
+                    {pedigreeRows.map((row, i) => (
+                      <div key={i} style={{ marginBottom: '8px', color: '#fff' }}>
+                        <strong style={{ textTransform: 'capitalize' }}>{row.position}:</strong> {row.ancestor_name} {row.ancestor_registration ? '(' + row.ancestor_registration + ')' : ''}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Verify pedigree input section */}
+                {(!pedigreeRows || pedigreeRows.length === 0) && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <h3 style={{ color: '#c9a94e', margin: '0 0 4px 0', fontSize: '18px' }}>Pedigree Verification</h3>
+                        <p style={{ color: '#999', margin: '0 0 12px 0', fontSize: '14px' }}>
+                          {verificationResult ? 'Verification complete — data pulled from canecorsopedigree.com' : 'Enter your dog\'s canecorsopedigree.com ID to pull verified health records and pedigree data.'}
+                        </p>
+                      </div>
+                      {!verificationResult && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                          <input
+                            type="text"
+                            value={pedigreeId}
+                            onChange={(e) => setPedigreeId(e.target.value)}
+                            placeholder="e.g. 115752"
+                            style={{
+                              padding: '10px 14px',
+                              background: '#0d0d1a',
+                              border: '1px solid #2d2d44',
+                              borderRadius: '8px',
+                              color: '#fff',
+                              fontSize: '14px',
+                              width: '160px'
+                            }}
+                          />
+                          <button
+                            onClick={handleVerifyPedigree}
+                            disabled={verifying}
+                            style={{
+                              padding: '10px 24px',
+                              background: verifying ? '#555' : 'linear-gradient(135deg, #c9a94e, #b8962d)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: verifying ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold',
+                              fontSize: '14px'
+                            }}
+                          >
+                            {verifying ? 'Verifying...' : '🔍 Verify Pedigree'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {verificationError && (
+                      <p style={{ color: '#ff6b6b', marginTop: '12px', fontSize: '14px' }}>{verificationError}</p>
+                    )}
+                    {verificationResult && (
+                      <div style={{ marginTop: '16px', padding: '16px', background: '#0d0d1a', borderRadius: '8px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Registered Name</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.registered_name}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Sire</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.sire?.name || 'Unknown'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Dam</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.dam?.name || 'Unknown'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>HD (Hips)</span><p style={{ color: verificationResult.hd_score ? '#4ade80' : '#999', margin: '4px 0 0', fontWeight: 'bold' }}>{verificationResult.hd_score || 'Not tested'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>ED (Elbows)</span><p style={{ color: verificationResult.ed_score ? '#4ade80' : '#999', margin: '4px 0 0', fontWeight: 'bold' }}>{verificationResult.ed_score || 'Not tested'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>DSRA</span><p style={{ color: verificationResult.dsra_certified ? '#4ade80' : '#999', margin: '4px 0 0', fontWeight: 'bold' }}>{verificationResult.dsra_result || 'Not tested'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Color</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.color || 'Unknown'}</p></div>
+                          <div><span style={{ color: '#999', fontSize: '12px' }}>Inbreeding</span><p style={{ color: '#fff', margin: '4px 0 0' }}>{verificationResult.inbreeding_coefficient ? verificationResult.inbreeding_coefficient.toFixed(2) + '%' : 'Unknown'}</p></div>
+                        </div>
+                        <p style={{ color: '#4ade80', marginTop: '16px', fontSize: '13px' }}>✅ Verified from canecorsopedigree.com at {new Date(verificationResult.verified_at).toLocaleString()}</p>
+                        {!saved ? (
+                          <button
+                            onClick={handleSaveVerification}
+                            disabled={saving}
+                            style={{
+                              marginTop: '16px',
+                              padding: '10px 24px',
+                              background: saving ? '#555' : 'linear-gradient(135deg, #4ade80, #22c55e)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: saving ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold',
+                              fontSize: '14px'
+                            }}
+                          >
+                            {saving ? 'Saving...' : '💾 Save to Profile'}
+                          </button>
+                        ) : (
+                          <p style={{ color: '#4ade80', marginTop: '16px', fontWeight: 'bold' }}>✅ Verified data saved to profile!</p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {healthTests.map(function(test, index) {
-                return (
-                  <HealthTestCard
-                    key={index}
-                    test={test}
-                    isOwner={isOwner}
-                    onUpload={handleHealthUpload}
-                    uploading={uploading && uploadingType === test.testType}
-                  />
-                );
-              })}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {healthTests.map((test, index) => (
+                <HealthTestCard key={index} test={test} />
+              ))}
             </div>
           </div>
 
-          {isOwner && (
-            <div className="mb-8">
-              <h2 
-                className="text-3xl font-bold text-white mb-2 flex items-center gap-2"
-                style={{ fontFamily: 'Playfair Display, serif' }}
-              >
-                <Award className="w-8 h-8 text-[#C5A55A]" />
-                Pedigree Verification
-              </h2>
-              
-              {hasPedigree ? (
-                <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-[#2ECC71]/30 rounded-xl p-6">
-                  <div className="flex items-center gap-2 text-[#2ECC71] mb-3">
-                    <span className="text-lg">{'\u2713'}</span>
-                    <span className="font-medium">Pedigree verified from canecorsopedigree.com</span>
-                  </div>
-                  {pedigree.map(function(p, i) {
-                    return (
-                      <p key={i} className="text-slate-300 text-sm">
-                        {p.position === 'sire' ? 'Sire' : 'Dam'}: <span className="text-white font-medium">{p.ancestor_name}</span>
-                      </p>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl p-6">
-                  <p className="text-slate-400 mb-4">
-                    Enter your dog's ID from canecorsopedigree.com to verify lineage and earn trust points.
-                  </p>
-                  <div className="flex gap-3">
-                    <input
-                      type="text"
-                      value={pedigreeId}
-                      onChange={function(e) { setPedigreeId(e.target.value); }}
-                      placeholder="Enter Pedigree Database ID (e.g., 123456)"
-                      className="flex-1 bg-[#0A1628] border border-white/20 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:border-[#C5A55A] focus:outline-none"
-                    />
-                    <Button
-                      onClick={handleVerifyPedigree}
-                      disabled={verifying}
-                      className="bg-[#C5A55A] hover:bg-[#b8962d] text-[#0A1628] font-medium px-6"
-                    >
-                      {verifying ? 'Verifying...' : 'Verify'}
-                    </Button>
-                  </div>
-                  
-                  {verificationError && (
-                    <p className="text-red-400 text-sm mt-3">{verificationError}</p>
-                  )}
-                  
-                  {verificationResult && !saved && (
-                    <div className="mt-4 p-4 bg-[#0A1628] rounded-lg border border-[#C5A55A]/30">
-                      <h4 className="text-white font-medium mb-2">Verification Result:</h4>
-                      <p className="text-slate-300 text-sm">Name: <span className="text-white">{verificationResult.name}</span></p>
-                      {verificationResult.sire && (
-                        <p className="text-slate-300 text-sm">Sire: <span className="text-white">{verificationResult.sire.name}</span></p>
-                      )}
-                      {verificationResult.dam && (
-                        <p className="text-slate-300 text-sm">Dam: <span className="text-white">{verificationResult.dam.name}</span></p>
-                      )}
-                      {verificationResult.titles && (
-                        <p className="text-slate-300 text-sm">Titles: <span className="text-white">{verificationResult.titles}</span></p>
-                      )}
+          {/* Photo Gallery Section */}
+          <div className="mb-8" data-testid="photo-gallery-section">
+            <h2 
+              className="text-3xl font-bold text-white mb-6 flex items-center gap-2"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+            >
+              <Image className="w-8 h-8" />
+              Photos
+              {dogPhotos.length > 0 && (
+                <span className="ml-2 px-2 py-1 bg-[#C5A55A]/20 text-[#C5A55A] text-sm rounded-full">
+                  {dogPhotos.length}
+                </span>
+              )}
+            </h2>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {dogPhotos.filter(p => !p.is_primary).map((photo) => (
+                <div 
+                  key={photo.id} 
+                  className="relative group aspect-square bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden"
+                  data-testid={`gallery-photo-${photo.id}`}
+                >
+                  <img
+                    src={photo.url}
+                    alt={photo.caption || 'Gallery photo'}
+                    className="w-full h-full object-cover"
+                  />
+                  {isOwner && (
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Button
-                        onClick={handleSaveVerification}
-                        disabled={saving}
-                        className="mt-3 bg-[#2ECC71] hover:bg-[#27AE60] text-white font-medium"
+                        onClick={() => handleDeletePhoto(photo)}
+                        variant="destructive"
+                        size="sm"
+                        className="bg-red-500 hover:bg-red-600"
+                        data-testid={`delete-photo-${photo.id}`}
                       >
-                        {saving ? 'Saving...' : 'Save to Profile'}
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   )}
-                  
-                  {saved && (
-                    <div className="mt-4 p-4 bg-[#2ECC71]/10 rounded-lg border border-[#2ECC71]/30">
-                      <p className="text-[#2ECC71] font-medium">{'\u2713'} Pedigree saved and trust score updated!</p>
+                  {photo.caption && (
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                      <p className="text-white text-xs truncate">{photo.caption}</p>
                     </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Add Photos Button (Owner Only) */}
+              {isOwner && (
+                <div 
+                  className="aspect-square bg-[#1E3A5F]/20 border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-[#C5A55A]/50 hover:bg-[#1E3A5F]/30 transition-all"
+                  onClick={() => !uploadingPhoto && galleryPhotoInputRef.current?.click()}
+                  data-testid="add-gallery-photos-btn"
+                >
+                  {uploadingPhoto && uploadingType === 'gallery' ? (
+                    <Loader2 className="w-8 h-8 text-[#C5A55A] animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="w-8 h-8 text-[#C5A55A] mb-2" />
+                      <span className="text-slate-400 text-sm">Add Photos</span>
+                    </>
                   )}
                 </div>
               )}
             </div>
-          )}
 
+            {dogPhotos.filter(p => !p.is_primary).length === 0 && !isOwner && (
+              <div className="text-center py-12 bg-[#1E3A5F]/20 rounded-xl border border-white/10">
+                <Image className="w-12 h-12 text-slate-500 mx-auto mb-3" />
+                <p className="text-slate-400">No photos yet</p>
+              </div>
+            )}
+
+            <input
+              ref={galleryPhotoInputRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+              multiple
+              onChange={handleGalleryPhotoUpload}
+              className="hidden"
+              data-testid="gallery-photo-input"
+            />
+          </div>
+          
+          {pedigreeRows.length > 0 && (
+            <div data-testid="pedigree-section">
+              <h2 
+                className="text-3xl font-bold text-white mb-6"
+                style={{ fontFamily: 'Playfair Display, serif' }}
+              >
+                Pedigree
+              </h2>
+              <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl p-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-1 flex items-center justify-center">
+                    <div className="text-center bg-[#0A1628] rounded-xl p-6 w-full border border-[#C5A55A]/50">
+                      <div className="w-20 h-20 rounded-full bg-[#C5A55A] flex items-center justify-center text-[#0A1628] font-bold text-2xl mx-auto mb-3">
+                        {dog.registered_name?.charAt(0) || '?'}
+                      </div>
+                      <h3 className="font-bold text-white text-lg mb-1">{dog.registered_name}</h3>
+                      <p className="text-xs text-slate-400">{dog.registration_number}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="md:col-span-2 space-y-4">
+                    {pedigreeRows.map((row, idx) => {
+                      const isSire = row.position?.toLowerCase() === 'sire';
+                      const isDam = row.position?.toLowerCase() === 'dam';
+                      return (
+                        <div 
+                          key={row.id || idx} 
+                          className="bg-[#0A1628] rounded-xl p-6 border border-white/10" 
+                          data-testid={`pedigree-${row.position || 'ancestor'}-${idx}`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-3 h-3 rounded-full ${isSire ? 'bg-[#3498DB]' : isDam ? 'bg-[#E91E63]' : 'bg-[#C5A55A]'}`}></div>
+                            <span className="text-sm text-slate-400 uppercase tracking-wider">
+                              {row.position || 'Ancestor'}
+                            </span>
+                            {row.source && (
+                              <span className="text-xs text-green-400 ml-2">✓ Verified</span>
+                            )}
+                          </div>
+                          <h4 className="font-semibold text-white text-lg mb-1">{row.ancestor_name}</h4>
+                          {row.ancestor_registration && (
+                            <p className="text-xs text-slate-400">{row.ancestor_registration}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <div className="mt-6 text-center">
+                  <p className="text-sm text-slate-400">
+                    3-generation pedigree available upon request
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Layout>
