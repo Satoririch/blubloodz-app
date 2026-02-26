@@ -447,19 +447,63 @@ const DogProfile = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <div>
-              <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden h-96 flex items-center justify-center">
-                {dog.image_url ? (
-                  <img
-                    src={dog.image_url}
-                    alt={dog.registered_name}
-                    className="w-full h-full object-cover"
-                    data-testid="dog-main-image"
-                  />
+              <div className="bg-[#1E3A5F]/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden h-96 flex items-center justify-center relative group">
+                {dog.profile_photo_url ? (
+                  <>
+                    <img
+                      src={dog.profile_photo_url}
+                      alt={dog.registered_name}
+                      className="w-full h-full object-cover"
+                      data-testid="dog-main-image"
+                    />
+                    {isOwner && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                          onClick={() => profilePhotoInputRef.current?.click()}
+                          disabled={uploadingPhoto}
+                          className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A]"
+                          data-testid="change-profile-photo-btn"
+                        >
+                          {uploadingPhoto && uploadingType === 'profile' ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Camera className="w-4 h-4 mr-2" />
+                          )}
+                          Change Photo
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : isOwner ? (
+                  <div className="text-center">
+                    <Button
+                      onClick={() => profilePhotoInputRef.current?.click()}
+                      disabled={uploadingPhoto}
+                      className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A]"
+                      data-testid="upload-profile-photo-btn"
+                    >
+                      {uploadingPhoto && uploadingType === 'profile' ? (
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      ) : (
+                        <Camera className="w-5 h-5 mr-2" />
+                      )}
+                      Upload Profile Photo
+                    </Button>
+                    <p className="text-slate-400 text-sm mt-2">+5 Trust Score for first photo!</p>
+                  </div>
                 ) : (
                   <div className="text-[#C5A55A] text-6xl font-bold">
                     {dog.registered_name?.charAt(0) || '?'}
                   </div>
                 )}
+                <input
+                  ref={profilePhotoInputRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.heic,.heif"
+                  onChange={handleProfilePhotoUpload}
+                  className="hidden"
+                  data-testid="profile-photo-input"
+                />
               </div>
             </div>
             
