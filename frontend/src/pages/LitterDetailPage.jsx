@@ -2,14 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, Calendar, DollarSign, Package, FileText, Heart, Mail, ExternalLink } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, MapPin, Calendar, DollarSign, Package, FileText, Heart, Mail, ExternalLink, X, Loader2, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/contexts/AuthContext';
 
 const LitterDetailPage = () => {
   const { litterId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [litter, setLitter] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [inquiryMessage, setInquiryMessage] = useState('');
+  const [sendingInquiry, setSendingInquiry] = useState(false);
+  const [inquirySent, setInquirySent] = useState(false);
+  const [existingInquiry, setExistingInquiry] = useState(null);
+  const [checkingInquiry, setCheckingInquiry] = useState(false);
 
   useEffect(() => {
     fetchLitter();
