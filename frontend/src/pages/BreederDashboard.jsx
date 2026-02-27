@@ -360,36 +360,109 @@ const BreederDashboard = () => {
                     <MessageSquare className="w-5 h-5" />
                     Inquiries
                   </h2>
-                  {inquiries.length > 0 && (
-                    <span className="bg-[#E74C3C] text-white text-xs font-bold px-2 py-1 rounded-full">
-                      {inquiries.length}
+                  {newInquiriesCount > 0 && (
+                    <span className="bg-[#C5A55A] text-[#0A1628] text-xs font-bold px-2 py-1 rounded-full">
+                      {newInquiriesCount} new
                     </span>
                   )}
                 </div>
                 {inquiries.length === 0 ? (
-                  <p className="text-slate-400 text-center py-4 text-sm">
-                    No pending inquiries
-                  </p>
+                  <div className="text-center py-6">
+                    <MessageSquare className="w-10 h-10 text-slate-500 mx-auto mb-3" />
+                    <p className="text-slate-400 text-sm">
+                      No inquiries yet. When buyers are interested in your litters, their messages will appear here.
+                    </p>
+                  </div>
                 ) : (
-                  <div className="space-y-3">
-                    {inquiries.map(inquiry => (
-                      <div
-                        key={inquiry.id}
-                        className="bg-[#0A1628] border border-white/10 rounded-lg p-4 hover:border-[#C5A55A]/50 transition-all cursor-pointer"
-                        data-testid={`inquiry-card-${inquiry.id}`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="font-medium text-white text-sm">{inquiry.buyer_name || 'Anonymous'}</span>
-                          <span className="text-xs text-slate-500">
-                            {new Date(inquiry.created_at).toLocaleDateString()}
-                          </span>
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                    {inquiries.map(inquiry => {
+                      const statusStyle = getInquiryStatusBadge(inquiry.status);
+                      return (
+                        <div
+                          key={inquiry.id}
+                          className="bg-[#0A1628] border border-white/10 rounded-lg p-4"
+                          data-testid={`inquiry-card-${inquiry.id}`}
+                        >
+                          {/* Header with buyer name and status */}
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <span className="font-medium text-white">
+                                {inquiry.users?.full_name || 'Anonymous Buyer'}
+                              </span>
+                              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+                                {inquiry.status}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {formatInquiryDate(inquiry.created_at)}
+                            </span>
+                          </div>
+
+                          {/* Contact info */}
+                          <div className="flex flex-wrap gap-3 mb-3 text-xs">
+                            {inquiry.users?.email && (
+                              <a 
+                                href={`mailto:${inquiry.users.email}`}
+                                className="text-[#C5A55A] hover:underline flex items-center gap-1"
+                              >
+                                <Mail className="w-3 h-3" />
+                                {inquiry.users.email}
+                              </a>
+                            )}
+                            {inquiry.users?.phone && (
+                              <a 
+                                href={`tel:${inquiry.users.phone}`}
+                                className="text-[#C5A55A] hover:underline flex items-center gap-1"
+                              >
+                                <Phone className="w-3 h-3" />
+                                {inquiry.users.phone}
+                              </a>
+                            )}
+                          </div>
+
+                          {/* Litter info */}
+                          {inquiry.litters && (
+                            <div className="text-xs text-slate-400 mb-3 p-2 bg-[#1E3A5F]/30 rounded">
+                              Re: <span className="text-white">{inquiry.litters.breed} Litter</span>
+                              {inquiry.litters.puppy_count && (
+                                <span> ({inquiry.litters.puppy_count} puppies)</span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Message */}
+                          <p className="text-sm text-slate-300 mb-3 whitespace-pre-wrap">{inquiry.message}</p>
+
+                          {/* Action buttons */}
+                          {inquiry.status !== 'closed' && (
+                            <div className="flex gap-2 pt-2 border-t border-white/10">
+                              {inquiry.status === 'new' && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateInquiryStatus(inquiry.id, 'replied')}
+                                  className="bg-[#2ECC71] text-white hover:bg-[#27AE60] text-xs"
+                                  data-testid={`mark-replied-${inquiry.id}`}
+                                >
+                                  <Check className="w-3 h-3 mr-1" />
+                                  Mark as Replied
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdateInquiryStatus(inquiry.id, 'closed')}
+                                className="border-white/20 text-slate-400 hover:text-white text-xs"
+                                data-testid={`close-inquiry-${inquiry.id}`}
+                              >
+                                <X className="w-3 h-3 mr-1" />
+                                Close
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        <p className="text-sm text-slate-300 line-clamp-2">{inquiry.message}</p>
-                        <Button size="sm" variant="ghost" className="mt-2 text-[#C5A55A] p-0 h-auto hover:bg-transparent">
-                          Reply <ArrowRight className="w-3 h-3 ml-1" />
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
