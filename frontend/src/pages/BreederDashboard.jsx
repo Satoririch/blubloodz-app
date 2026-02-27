@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import TrustScoreGauge from '@/components/TrustScoreGauge';
 import VerifiedBadge from '@/components/VerifiedBadge';
-import { Dog, Package, MessageSquare, ArrowRight, Plus } from 'lucide-react';
+import { Dog, Package, MessageSquare, ArrowRight, Plus, Check, X, Mail, Phone, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/lib/supabaseClient';
