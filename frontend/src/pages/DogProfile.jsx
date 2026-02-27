@@ -25,6 +25,8 @@ const DogProfile = () => {
   const [dogPhotos, setDogPhotos] = useState([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingType, setUploadingType] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const profilePhotoInputRef = useRef(null);
   const galleryPhotoInputRef = useRef(null);
   
@@ -213,6 +215,41 @@ const DogProfile = () => {
     if (data.dsra_result && data.dsra_result !== 'UNKNOWN') score += 15;
     if (data.dvl2_result && data.dvl2_result !== 'UNKNOWN') score += 10;
     return Math.min(score, 100);
+  };
+
+  const handleDeleteDog = async () => {
+    if (!dog || !user) return;
+    setDeleting(true);
+    try {
+      // Delete photos from storage
+      const { data: photos } = await supabase
+        .from('dog_photos')
+        .select('url')
+        .eq('dog_id', dog.id);
+      if (photos && photos.length > 0) {
+        const filePaths = photos.map(p => {
+          try {
+            const url = new URL(p.url);
+            return url.pathname.split('/object/public/dog-photos/')[1];
+          } catch { return null; }
+        }).filter(Boolean);
+        if (filePaths.length > 0) {
+          await supabase.storage.from('dog-photos').remove(filePaths);
+        }
+      }
+      // Delete related records
+      await supabase.from('dog_photos').delete().eq('dog_id', dog.id);
+      await supabase.from('health_records').delete().eq('dog_id', dog.id);
+      await supabase.from('pedigrees').delete().eq('dog_id', dog.id);
+      // Delete the dog itself (owner_id check for safety)
+      await supabase.from('dogs').delete().eq('id', dog.id).eq('owner_id', user.id);
+      navigate('/dashboard/breeder');
+    } catch (err) {
+      console.error('Error deleting dog:', err);
+      alert('Failed to delete dog. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleProfilePhotoUpload = async (e) => {
@@ -865,6 +902,40 @@ const DogProfile = () => {
                   </p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Delete Dog Section - Owner Only */}
+          {isOwner && (
+            <div className="mt-8 pt-6 border-t border-slate-700">
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full py-3 px-4 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors text-sm"
+                >
+                  Delete This Dog
+                </button>
+              ) : (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                  <p className="text-red-400 text-sm font-semibold mb-2">Are you sure?</p>
+                  <p className="text-slate-400 text-xs mb-4">This will permanently delete this dog profile, photos, health records, and pedigree data. This cannot be undone.</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleDeleteDog}
+                      disabled={deleting}
+                      className="flex-1 py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                    >
+                      {deleting ? 'Deleting...' : 'Yes, Delete Forever'}
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 py-2 px-4 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 text-sm transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
