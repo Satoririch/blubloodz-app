@@ -49,12 +49,31 @@ const BreederDashboard = () => {
       if (littersError) throw littersError;
       setLitters(littersData || []);
       
-      // Fetch inquiries
+      // Fetch inquiries with full details
       const { data: inquiriesData, error: inquiriesError } = await supabase
         .from('inquiries')
-        .select('*')
+        .select(`
+          id,
+          message,
+          status,
+          created_at,
+          updated_at,
+          litter_id,
+          buyer_id,
+          litters (
+            id,
+            breed,
+            puppy_count,
+            status
+          ),
+          users!inquiries_buyer_id_fkey (
+            id,
+            full_name,
+            email,
+            phone
+          )
+        `)
         .eq('breeder_id', user.id)
-        .eq('status', 'pending')
         .order('created_at', { ascending: false });
       
       if (inquiriesError) throw inquiriesError;
