@@ -54,8 +54,8 @@ const LitterDetailPage = () => {
         .from('litters')
         .select(`
           *,
-          sire:dogs!litters_sire_id_fkey(id, registered_name, call_name, breed, trust_score, image_url, registration_number),
-          dam:dogs!litters_dam_id_fkey(id, registered_name, call_name, breed, trust_score, image_url, registration_number),
+          sire:dogs!litters_sire_id_fkey(id, registered_name, call_name, breed, registration_number),
+          dam:dogs!litters_dam_id_fkey(id, registered_name, call_name, breed, registration_number),
           breeder:users!litters_breeder_id_fkey(id, full_name, kennel_name, location, bio)
         `)
         .eq('id', litterId)
