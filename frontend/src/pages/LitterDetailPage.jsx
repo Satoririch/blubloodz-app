@@ -423,6 +423,100 @@ const LitterDetailPage = () => {
           )}
         </div>
       </div>
+
+      {/* Inquiry Modal */}
+      {showInquiryModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" data-testid="inquiry-modal">
+          <div className="bg-[#1E3A5F] border border-white/10 rounded-xl p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-white">
+                {inquirySent ? 'Inquiry Sent!' : !user ? 'Login Required' : 'Send Inquiry'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowInquiryModal(false);
+                  setInquirySent(false);
+                  setInquiryMessage('');
+                }}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {inquirySent ? (
+              <div className="text-center py-6">
+                <CheckCircle className="w-16 h-16 text-[#2ECC71] mx-auto mb-4" />
+                <p className="text-white mb-2">Your inquiry has been sent!</p>
+                <p className="text-slate-400 text-sm">The breeder will be notified and can contact you directly.</p>
+              </div>
+            ) : !user ? (
+              <div className="text-center py-4">
+                <p className="text-slate-300 mb-6">Please log in to send an inquiry to this breeder.</p>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    onClick={() => navigate('/login')}
+                    className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A]"
+                  >
+                    Log In
+                  </Button>
+                  <Button
+                    onClick={() => setShowInquiryModal(false)}
+                    variant="outline"
+                    className="border-white/20 text-slate-300"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-slate-400 text-sm mb-4">
+                  Send a message to {litter.breeder?.kennel_name || litter.breeder?.full_name || 'the breeder'} about this {litter.breed} litter.
+                </p>
+                <Textarea
+                  value={inquiryMessage}
+                  onChange={(e) => setInquiryMessage(e.target.value)}
+                  placeholder="Hi! I'm interested in this litter. I'd like to know more about..."
+                  className="bg-[#0A1628] border-white/10 text-white placeholder:text-slate-500 min-h-[120px] mb-4"
+                  data-testid="inquiry-message-input"
+                />
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    onClick={() => {
+                      setShowInquiryModal(false);
+                      setInquiryMessage('');
+                    }}
+                    variant="outline"
+                    className="border-white/20 text-slate-300"
+                    disabled={sendingInquiry}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSendInquiry}
+                    className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A]"
+                    disabled={sendingInquiry || !inquiryMessage.trim()}
+                    data-testid="send-inquiry-button"
+                  >
+                    {sendingInquiry ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Send Inquiry
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
