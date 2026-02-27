@@ -105,6 +105,44 @@ const BreederDashboard = () => {
     if (score >= 60) return { text: 'Silver', color: '#94A3B8' };
     return null;
   };
+
+  const handleUpdateInquiryStatus = async (inquiryId, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from('inquiries')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', inquiryId);
+
+      if (error) throw error;
+
+      // Update local state
+      setInquiries(prev => 
+        prev.map(inq => inq.id === inquiryId ? { ...inq, status: newStatus } : inq)
+      );
+    } catch (error) {
+      console.error('Error updating inquiry status:', error);
+      alert('Failed to update inquiry status');
+    }
+  };
+
+  const getInquiryStatusBadge = (status) => {
+    const styles = {
+      new: { bg: 'bg-[#C5A55A]/20', text: 'text-[#C5A55A]', border: 'border-[#C5A55A]/30' },
+      replied: { bg: 'bg-[#2ECC71]/20', text: 'text-[#2ECC71]', border: 'border-[#2ECC71]/30' },
+      closed: { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500/30' },
+    };
+    return styles[status] || styles.new;
+  };
+
+  const formatInquiryDate = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const newInquiriesCount = inquiries.filter(i => i.status === 'new').length;
   
   if (loading) {
     return (
