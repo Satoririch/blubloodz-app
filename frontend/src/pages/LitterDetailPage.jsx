@@ -186,13 +186,9 @@ const LitterDetailPage = () => {
     >
       <div className="flex items-center gap-4">
         <div className="w-20 h-20 rounded-full bg-[#0A1628] flex items-center justify-center overflow-hidden border-2 border-[#C5A55A]/30">
-          {dog.image_url ? (
-            <img src={dog.image_url} alt={dog.registered_name} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-3xl font-bold text-[#C5A55A]">
-              {dog.registered_name?.charAt(0) || '?'}
-            </span>
-          )}
+          <span className="text-3xl font-bold text-[#C5A55A]">
+            {dog.registered_name?.charAt(0) || '?'}
+          </span>
         </div>
         <div className="flex-1">
           <p className="text-xs text-[#C5A55A] uppercase tracking-wider mb-1">{role}</p>
@@ -207,7 +203,6 @@ const LitterDetailPage = () => {
             </p>
           )}
         </div>
-        <TrustScoreCircle score={dog.trust_score} />
       </div>
       <div className="mt-4 flex items-center justify-end text-slate-400 text-sm group-hover:text-[#C5A55A]">
         View Profile <ExternalLink className="w-4 h-4 ml-1" />
