@@ -95,6 +95,51 @@ const LitterDetailPage = () => {
     });
   };
 
+  const handleInquiry = () => {
+    if (!user) {
+      setShowInquiryModal(true);
+      return;
+    }
+    if (user.id === litter?.breeder_id) {
+      return;
+    }
+    if (existingInquiry) {
+      return;
+    }
+    setShowInquiryModal(true);
+  };
+
+  const handleSendInquiry = async () => {
+    if (!user || !litter || !inquiryMessage.trim()) return;
+    
+    setSendingInquiry(true);
+    try {
+      const { error } = await supabase.from('inquiries').insert({
+        litter_id: litter.id,
+        buyer_id: user.id,
+        breeder_id: litter.breeder_id,
+        message: inquiryMessage.trim(),
+        status: 'new'
+      });
+
+      if (error) throw error;
+
+      setInquirySent(true);
+      setExistingInquiry({ id: 'sent' });
+      setTimeout(() => {
+        setShowInquiryModal(false);
+        setInquiryMessage('');
+      }, 2000);
+    } catch (error) {
+      console.error('Error sending inquiry:', error);
+      alert('Failed to send inquiry. Please try again.');
+    } finally {
+      setSendingInquiry(false);
+    }
+  };
+
+  const isBreeder = user && litter && user.id === litter.breeder_id;
+
   const DogCard = ({ dog, role }) => (
     <Link
       to={`/dog/${dog.id}`}
