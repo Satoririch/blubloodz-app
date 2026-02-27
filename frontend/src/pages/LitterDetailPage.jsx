@@ -276,15 +276,26 @@ const LitterDetailPage = () => {
                 </p>
               </div>
 
-              <Button
-                onClick={handleInquiry}
-                size="lg"
-                className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A] font-semibold"
-                data-testid="inquire-button"
-              >
-                <Mail className="w-5 h-5 mr-2" />
-                Inquire About This Litter
-              </Button>
+              {/* Inquiry Button - hide if user is the breeder */}
+              {!isBreeder && (
+                existingInquiry ? (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-[#2ECC71]/10 border border-[#2ECC71]/30 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-[#2ECC71]" />
+                    <span className="text-[#2ECC71] font-medium">You've already inquired about this litter</span>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={handleInquiry}
+                    size="lg"
+                    className="bg-[#C5A55A] text-[#0A1628] hover:bg-[#D4B66A] font-semibold"
+                    data-testid="inquire-button"
+                    disabled={checkingInquiry}
+                  >
+                    <Mail className="w-5 h-5 mr-2" />
+                    Inquire About This Litter
+                  </Button>
+                )
+              )}
             </div>
 
             {/* Stats Grid */}
