@@ -24,6 +24,30 @@ const LitterDetailPage = () => {
     fetchLitter();
   }, [litterId]);
 
+  useEffect(() => {
+    if (user && litter) {
+      checkExistingInquiry();
+    }
+  }, [user, litter]);
+
+  const checkExistingInquiry = async () => {
+    if (!user || !litter) return;
+    setCheckingInquiry(true);
+    try {
+      const { data } = await supabase
+        .from('inquiries')
+        .select('id')
+        .eq('litter_id', litter.id)
+        .eq('buyer_id', user.id)
+        .maybeSingle();
+      setExistingInquiry(data);
+    } catch (error) {
+      console.error('Error checking existing inquiry:', error);
+    } finally {
+      setCheckingInquiry(false);
+    }
+  };
+
   const fetchLitter = async () => {
     try {
       const { data, error } = await supabase
