@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import HealthTestCard from '@/components/HealthTestCard';
-import { ArrowLeft, Award, Calendar, Weight, FileText, Camera, Plus, Trash2, Loader2, Image } from 'lucide-react';
+import { ArrowLeft, Award, Calendar, Weight, FileText, Camera, Plus, Trash2, Loader2, Image, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +27,9 @@ const DogProfile = () => {
   const [uploadingType, setUploadingType] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
   const profilePhotoInputRef = useRef(null);
   const galleryPhotoInputRef = useRef(null);
   
@@ -215,6 +218,57 @@ const DogProfile = () => {
     if (data.dsra_result && data.dsra_result !== 'UNKNOWN') score += 15;
     if (data.dvl2_result && data.dvl2_result !== 'UNKNOWN') score += 10;
     return Math.min(score, 100);
+  };
+
+  const startEditing = () => {
+    setEditForm({
+      call_name: dog.call_name || '',
+      weight: dog.weight || '',
+      height: dog.height || '',
+      color: dog.color || '',
+      stud_fee: dog.stud_fee || '',
+      available_for_breeding: dog.available_for_breeding || false,
+      dob: dog.dob || '',
+      sex: dog.sex || '',
+      registration_number: dog.registration_number || '',
+    });
+    setEditing(true);
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveEdit = async () => {
+    if (!dog || !user) return;
+    setSavingEdit(true);
+    try {
+      const updates = {
+        call_name: editForm.call_name || null,
+        weight: editForm.weight ? Number(editForm.weight) : null,
+        height: editForm.height ? Number(editForm.height) : null,
+        color: editForm.color || null,
+        stud_fee: editForm.stud_fee ? Number(editForm.stud_fee) : null,
+        available_for_breeding: editForm.available_for_breeding,
+        dob: editForm.dob || null,
+        sex: editForm.sex || null,
+        registration_number: editForm.registration_number || null,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase
+        .from('dogs')
+        .update(updates)
+        .eq('id', dog.id)
+        .eq('owner_id', user.id);
+      if (error) throw error;
+      setDog(prev => ({ ...prev, ...updates }));
+      setEditing(false);
+    } catch (err) {
+      console.error('Error saving dog edit:', err);
+      alert('Failed to save changes: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const handleDeleteDog = async () => {
@@ -620,6 +674,25 @@ const DogProfile = () => {
                       <p className="text-white font-medium">{dog.color}</p>
                     </div>
                   )}
+                  {dog.height && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-slate-400 text-sm">Height:</span>
+                      <p className="text-white font-medium">{dog.height} in</p>
+                    </div>
+                  )}
+                  {dog.stud_fee && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-slate-400 text-sm">Stud Fee:</span>
+                      <p className="text-white font-medium">${Number(dog.stud_fee).toLocaleString()}</p>
+                    </div>
+                  )}
+                  {dog.available_for_breeding && (
+                    <div className="mt-2">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
+                        ✓ Available for Breeding
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -637,6 +710,75 @@ const DogProfile = () => {
                     <div>
                       <p className="text-white font-medium">{owner.kennel_name || owner.full_name}</p>
                       <p className="text-sm text-slate-400">{owner.location}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Edit Dog Button - Owner Only */}
+              {isOwner && !editing && (
+                <button
+                  onClick={startEditing}
+                  className="w-full mt-4 py-3 px-4 rounded-lg bg-[#C5A55A] text-[#0A1628] font-semibold hover:bg-[#D4B66A] transition-colors text-sm"
+                >
+                  ✏️ Edit Dog Profile
+                </button>
+              )}
+
+              {/* Edit Form - Owner Only */}
+              {isOwner && editing && (
+                <div className="mt-4 bg-[#1E3A5F]/40 backdrop-blur-md border border-[#C5A55A]/30 rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Edit Profile</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-slate-400 text-xs block mb-1">Call Name</label>
+                      <input type="text" value={editForm.call_name} onChange={(e) => handleEditChange('call_name', e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[#0A1628] border border-white/10 text-white text-sm focus:border-[#C5A55A] outline-none" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-slate-400 text-xs block mb-1">Weight (lbs)</label>
+                        <input type="number" value={editForm.weight} onChange={(e) => handleEditChange('weight', e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[#0A1628] border border-white/10 text-white text-sm focus:border-[#C5A55A] outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-slate-400 text-xs block mb-1">Height (in)</label>
+                        <input type="number" value={editForm.height} onChange={(e) => handleEditChange('height', e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[#0A1628] border border-white/10 text-white text-sm focus:border-[#C5A55A] outline-none" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-slate-400 text-xs block mb-1">Color</label>
+                      <input type="text" value={editForm.color} onChange={(e) => handleEditChange('color', e.target.value)} placeholder="e.g. Black, Blue, Fawn" className="w-full px-3 py-2 rounded-lg bg-[#0A1628] border border-white/10 text-white text-sm focus:border-[#C5A55A] outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 text-xs block mb-1">Sex</label>
+                      <select value={editForm.sex} onChange={(e) => handleEditChange('sex', e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[#0A1628] border border-white/10 text-white text-sm focus:border-[#C5A55A] outline-none">
+                        <option value="">Select</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-slate-400 text-xs block mb-1">Date of Birth</label>
+                      <input type="date" value={editForm.dob} onChange={(e) => handleEditChange('dob', e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[#0A1628] border border-white/10 text-white text-sm focus:border-[#C5A55A] outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 text-xs block mb-1">Registration Number</label>
+                      <input type="text" value={editForm.registration_number} onChange={(e) => handleEditChange('registration_number', e.target.value)} className="w-full px-3 py-2 rounded-lg bg-[#0A1628] border border-white/10 text-white text-sm focus:border-[#C5A55A] outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 text-xs block mb-1">Stud Fee ($)</label>
+                      <input type="number" value={editForm.stud_fee} onChange={(e) => handleEditChange('stud_fee', e.target.value)} placeholder="e.g. 2500" className="w-full px-3 py-2 rounded-lg bg-[#0A1628] border border-white/10 text-white text-sm focus:border-[#C5A55A] outline-none" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input type="checkbox" checked={editForm.available_for_breeding} onChange={(e) => handleEditChange('available_for_breeding', e.target.checked)} className="w-4 h-4 accent-[#C5A55A]" />
+                      <label className="text-slate-300 text-sm">Available for Breeding</label>
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <button onClick={handleSaveEdit} disabled={savingEdit} className="flex-1 py-2 px-4 rounded-lg bg-[#C5A55A] text-[#0A1628] font-semibold hover:bg-[#D4B66A] disabled:opacity-50 transition-colors text-sm">
+                        {savingEdit ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button onClick={() => setEditing(false)} className="flex-1 py-2 px-4 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 text-sm transition-colors">
+                        Cancel
+                      </button>
                     </div>
                   </div>
                 </div>
